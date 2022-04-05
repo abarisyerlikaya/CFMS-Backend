@@ -10,7 +10,5 @@ import java.util.List;
 public interface ConversationService {
     List<Conversation> getList(GetConversationsRequest request);
 
-    ConversationDetail getDetail(String id);
-
     List<Message> getMessages(GetMessagesRequest request);
 }
