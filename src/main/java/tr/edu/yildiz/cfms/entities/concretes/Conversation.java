@@ -1,15 +1,14 @@
 package tr.edu.yildiz.cfms.entities.concretes;
 
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import tr.edu.yildiz.cfms.core.enums.Platform;
 
 import java.time.LocalDateTime;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name="conversations")
+@EntityListeners(AuditingEntityListener.class)
 public class Conversation {
     @Id
     @Column(name="id")
@@ -24,15 +23,12 @@ public class Conversation {
     @Column(name="last_message_date")
     private LocalDateTime lastMessageDate;
 
-    @Column(name="messages_url")
-    private String messagesUrl;
 
-    public Conversation(String id, Platform platform, String clientName, LocalDateTime lastMessageDate, String messagesUrl) {
+    public Conversation(String id, Platform platform, String clientName, LocalDateTime lastMessageDate) {
         this.id = id;
         this.platform = platform;
         this.clientName = clientName;
         this.lastMessageDate = lastMessageDate;
-        this.messagesUrl = messagesUrl;
     }
 
     public Conversation() {
@@ -71,11 +67,4 @@ public class Conversation {
         this.lastMessageDate = lastMessageDate;
     }
 
-    public String getMessagesUrl() {
-        return messagesUrl;
-    }
-
-    public void setMessagesUrl(String messagesUrl) {
-        this.messagesUrl = messagesUrl;
-    }
 }

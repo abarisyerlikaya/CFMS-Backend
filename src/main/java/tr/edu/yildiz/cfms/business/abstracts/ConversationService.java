@@ -11,4 +11,6 @@ public interface ConversationService {
     List<Conversation> getList(GetConversationsRequest request);
 
     List<Message> getMessages(GetMessagesRequest request);
+
+    Conversation sendMessage(Message request);
 }
