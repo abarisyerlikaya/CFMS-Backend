@@ -8,7 +8,6 @@ import tr.edu.yildiz.cfms.api.models.Message;
 import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
 import tr.edu.yildiz.cfms.core.response_types.Response;
 import tr.edu.yildiz.cfms.core.response_types.SuccessDataResponse;
-
 import java.util.List;
 
 @RestController
@@ -27,7 +26,7 @@ public class ConversationsController {
         var conversations = conversationService.getList(request);
         return new SuccessDataResponse<>(conversations);
     }
-
+    
     @GetMapping("/{conversationId}")
     public List<Message> getMessages(@PathVariable String conversationId, GetMessagesRequest request) {
         request.conversationId = conversationId;
