@@ -1,4 +1,4 @@
-package tr.edu.yildiz.cfms.entities.concretes;
+package tr.edu.yildiz.cfms.entities.concretes.hibernate;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

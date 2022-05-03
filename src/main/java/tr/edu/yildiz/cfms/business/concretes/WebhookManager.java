@@ -6,15 +6,19 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import tr.edu.yildiz.cfms.api.dtos.apis.facebook.FacebookApiUserDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
-import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoAttachment;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoEntry;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoMessage;
 import tr.edu.yildiz.cfms.business.abstracts.WebhookService;
 import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
+import tr.edu.yildiz.cfms.business.repository.MessageRepository;
 import tr.edu.yildiz.cfms.core.enums.Platform;
-import tr.edu.yildiz.cfms.entities.concretes.Conversation;
+import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
+import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessage;
+import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesDocument;
+import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessageAttachment;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +31,10 @@ import static tr.edu.yildiz.cfms.core.utils.Constants.FB_PAGE_ACCESS_TOKEN;
 public class WebhookManager implements WebhookService {
     @Autowired
     private ConversationRepository conversationRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
+
 
     @Override
     public void handleWebhook(FacebookWebhookDto dto) {
@@ -75,18 +83,27 @@ public class WebhookManager implements WebhookService {
         }
     }
 
-    private void updateConversationWithMessage(String id, LocalDateTime lastMessageDate, FacebookWebhookDtoMessage message) {
+    private void updateConversationWithMessage(String id, LocalDateTime lastMessageDate, FacebookWebhookDtoMessage dtoMessage) {
         boolean sentByClient = true;
         String text = null;
         String repliedTo = null;
-        List<FacebookWebhookDtoAttachment> attachments = null;
+        List<MongoDbMessageAttachment> attachments = null;
 
-        if (message.isTextMessage())
-            text = message.getText();
-        if (message.isReplyMessage())
-            repliedTo = message.getReplyTo().getMid();
-        if (message.hasAttachment())
-            attachments = message.getAttachments();
+        if (dtoMessage.isTextMessage())
+            text = dtoMessage.getText();
+        if (dtoMessage.isReplyMessage())
+            repliedTo = dtoMessage.getReplyTo().getMid();
+        if (dtoMessage.hasAttachment()) {
+            var dtoAttachments = dtoMessage.getAttachments();
+            for (var item : dtoAttachments) {
+                String url = null;
+                String type = item.getType();
+                var payload = item.getPayload();
+                if (payload != null)
+                    url = payload.getUrl();
+                attachments.add(new MongoDbMessageAttachment(type, url));
+            }
+        }
 
         Optional<Conversation> optional = conversationRepository.findById(id);
         if (optional.isEmpty())
@@ -94,23 +111,41 @@ public class WebhookManager implements WebhookService {
 
         Conversation conversation = optional.get();
         conversation.setLastMessageDate(lastMessageDate);
+
         conversationRepository.save(conversation);
+        // MessagesItem message = new MessagesItem(id, lastMessageDate, sentByClient, text, repliedTo, attachments);
     }
 
-    private void createConversationWithMessage(Conversation conversation, FacebookWebhookDtoMessage message) {
+    private void createConversationWithMessage(Conversation conversation, FacebookWebhookDtoMessage dtoMessage) {
         boolean sentByClient = true;
         String text = null;
         String repliedTo = null;
-        List<FacebookWebhookDtoAttachment> attachments = null;
+        List<MongoDbMessageAttachment> attachments = null;
 
-        if (message.isTextMessage())
-            text = message.getText();
-        if (message.isReplyMessage())
-            repliedTo = message.getReplyTo().getMid();
-        if (message.hasAttachment())
-            attachments = message.getAttachments();
+        if (dtoMessage.isTextMessage())
+            text = dtoMessage.getText();
+        if (dtoMessage.isReplyMessage())
+            repliedTo = dtoMessage.getReplyTo().getMid();
+        if (dtoMessage.hasAttachment()) {
+            var dtoAttachments = dtoMessage.getAttachments();
+            for (var item : dtoAttachments) {
+                String url = null;
+                String type = item.getType();
+                var payload = item.getPayload();
+                if (payload != null)
+                    url = payload.getUrl();
+                attachments.add(new MongoDbMessageAttachment(type, url));
+            }
+        }
+
+        String id = conversation.getId();
+        LocalDateTime sentDate = conversation.getLastMessageDate();
+        List<MongoDbMessage> messages = new ArrayList<>();
+        messages.add(new MongoDbMessage(sentDate, sentByClient, text, repliedTo, attachments));
+        MongoDbMessagesDocument message = new MongoDbMessagesDocument(id, messages);
 
         conversationRepository.save(conversation);
+        messageRepository.save(message);
     }
 
 }
