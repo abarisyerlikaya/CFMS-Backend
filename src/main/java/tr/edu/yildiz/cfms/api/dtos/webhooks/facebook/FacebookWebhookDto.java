@@ -14,5 +14,5 @@ public class FacebookWebhookDto {
     @Getter
     @Setter
     @JsonProperty("entry")
-    private List<_Entry> entry;
+    private List<FacebookWebhookDtoEntry> entry;
 }

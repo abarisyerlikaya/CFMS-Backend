@@ -4,17 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-public class _Payload {
-    @Getter
-    @Setter
-    private String url;
+import java.util.List;
 
+public class FacebookWebhookDtoProduct {
     @Getter
     @Setter
-    @JsonProperty("product")
-    private _Product product;
-
-    @Getter
-    @Setter
-    private String title;
+    @JsonProperty("elements")
+    private List<FacebookWebhookDtoElement> elements;
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-public class _Element {
+public class FacebookWebhookDtoElement {
     @Getter
     @Setter
     private String id;
