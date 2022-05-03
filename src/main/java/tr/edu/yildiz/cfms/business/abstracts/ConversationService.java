@@ -10,7 +10,7 @@ import java.util.List;
 public interface ConversationService {
     List<Conversation> getList(GetConversationsRequest request);
 
-    List<Message> getMessages(GetMessagesRequest request);
+    ConversationDetail getConversationDetail(GetConversationDetailRequest request);
 
     Conversation sendMessage(Message request);
 }

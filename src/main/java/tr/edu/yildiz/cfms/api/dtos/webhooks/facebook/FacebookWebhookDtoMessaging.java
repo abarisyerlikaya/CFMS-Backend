@@ -4,16 +4,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-public class _Messaging {
+public class FacebookWebhookDtoMessaging {
     @Getter
     @Setter
     @JsonProperty("sender")
-    private _ObjectWithId sender;
+    private FacebookWebhookDtoObjectWithId sender;
 
     @Getter
     @Setter
     @JsonProperty("recipient")
-    private _ObjectWithId recipient;
+    private FacebookWebhookDtoObjectWithId recipient;
 
     @Getter
     @Setter
@@ -22,5 +22,13 @@ public class _Messaging {
     @Getter
     @Setter
     @JsonProperty("message")
-    private _Message message;
+    private FacebookWebhookDtoMessage message;
+
+    public String getSenderId() {
+        var sender = this.getSender();
+        if (sender == null)
+            return null;
+
+        return sender.getId();
+    }
 }

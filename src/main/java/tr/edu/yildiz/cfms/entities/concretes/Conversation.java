@@ -1,5 +1,9 @@
 package tr.edu.yildiz.cfms.entities.concretes;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import tr.edu.yildiz.cfms.core.enums.Platform;
 
@@ -8,63 +12,34 @@ import javax.persistence.*;
 
 @Entity
 @Table(name="conversations")
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Conversation {
     @Id
+    @Getter
+    @Setter
     @Column(name="id")
     private String id;
 
+    @Getter
+    @Setter
     @Column(name="platform")
     private Platform platform;
 
+    @Getter
+    @Setter
     @Column(name="client_name")
     private String clientName;
 
+    @Getter
+    @Setter
+    @Column(name="client_id")
+    private String clientId;
+
+    @Getter
+    @Setter
     @Column(name="last_message_date")
     private LocalDateTime lastMessageDate;
-
-
-    public Conversation(String id, Platform platform, String clientName, LocalDateTime lastMessageDate) {
-        this.id = id;
-        this.platform = platform;
-        this.clientName = clientName;
-        this.lastMessageDate = lastMessageDate;
-    }
-
-    public Conversation() {
-
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Platform getPlatform() {
-        return platform;
-    }
-
-    public void setPlatform(Platform platform) {
-        this.platform = platform;
-    }
-
-    public String getClientName() {
-        return clientName;
-    }
-
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
-    }
-
-    public LocalDateTime getLastMessageDate() {
-        return lastMessageDate;
-    }
-
-    public void setLastMessageDate(LocalDateTime lastMessageDate) {
-        this.lastMessageDate = lastMessageDate;
-    }
 
 }

@@ -15,5 +15,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  *
  * @author Robley Gori - ro6ley.github.io
  */
-public interface ConversationRepository extends JpaRepository<Conversation, Long> {
+public interface ConversationRepository extends JpaRepository<Conversation, String> {
 }

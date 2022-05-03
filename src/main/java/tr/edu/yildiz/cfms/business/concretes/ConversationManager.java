@@ -10,7 +10,6 @@ import tr.edu.yildiz.cfms.entities.concretes.Conversation;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -27,7 +26,7 @@ public class ConversationManager implements ConversationService {
         results.addAll(getListFromTelegram(request));
         results.addAll(getListFromTwitter(request));
         results.addAll(getListFromLinkedIn(request));
-        results.add(new Conversation("MyId", Platform.FACEBOOK, "Ahmet", LocalDateTime.now()));
+        results.add(new Conversation("MyId", Platform.FACEBOOK, "Ahmet", "", LocalDateTime.now()));
 
         // Bütün conversationları getiren sorgu
         results = conversationRepository.findAll();
@@ -39,7 +38,7 @@ public class ConversationManager implements ConversationService {
     }
 
     @Override
-    public List<Message> getMessages(GetMessagesRequest request) {
+    public ConversationDetail getConversationDetail(GetConversationDetailRequest request) {
         return null;
     }
 
@@ -50,7 +49,7 @@ public class ConversationManager implements ConversationService {
         final Platform platform = request.getPlatform();
         final LocalDateTime dateTime = request.getDate();
 
-        conversationRepository.save(new Conversation(conversationId, platform, message, dateTime));
+        conversationRepository.save(new Conversation(conversationId, platform, message, "", dateTime));
         return null;
     }
 
