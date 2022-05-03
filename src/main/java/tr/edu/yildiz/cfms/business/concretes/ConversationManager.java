@@ -6,7 +6,7 @@ import tr.edu.yildiz.cfms.api.models.*;
 import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
 import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
 import tr.edu.yildiz.cfms.core.enums.Platform;
-import tr.edu.yildiz.cfms.entities.concretes.Conversation;
+import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

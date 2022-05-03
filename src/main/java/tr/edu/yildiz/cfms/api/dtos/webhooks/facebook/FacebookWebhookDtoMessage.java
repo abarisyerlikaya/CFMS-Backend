@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class FacebookWebhookDtoMessage {
@@ -29,7 +28,7 @@ public class FacebookWebhookDtoMessage {
     @Getter
     @Setter
     @JsonProperty("referral")
-    private FacebookWebhookDtoObjectWithId referral;
+    private FacebookWebhookDtoObjectWithId referral; // TODO bu neydi
 
     public boolean isTextMessage() {
         return this.text != null && this.text.length() > 0;
