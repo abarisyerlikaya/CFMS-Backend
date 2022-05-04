@@ -25,21 +25,8 @@ public class FacebookWebhookDtoMessage {
     @JsonProperty("attachments")
     private List<FacebookWebhookDtoAttachment> attachments;
 
-    @Getter
-    @Setter
-    @JsonProperty("referral")
-    private FacebookWebhookDtoObjectWithId referral; // TODO bu neydi
-
     public boolean isTextMessage() {
         return this.text != null && this.text.length() > 0;
-    }
-
-    public boolean isReplyMessage() {
-        if (this.replyTo == null)
-            return false;
-
-        String mid = this.replyTo.getMid();
-        return mid != null && mid.length() > 0;
     }
 
     public boolean hasAttachment() {

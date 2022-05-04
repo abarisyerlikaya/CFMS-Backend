@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import tr.edu.yildiz.cfms.api.controllers.ChatController;
 import tr.edu.yildiz.cfms.api.dtos.apis.facebook.FacebookApiUserDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoEntry;
@@ -35,6 +36,9 @@ public class WebhookManager implements WebhookService {
 
     @Autowired
     private MessageRepository messageRepository;
+
+    @Autowired
+    private ChatController chatController;
 
 
     @Override
@@ -113,6 +117,8 @@ public class WebhookManager implements WebhookService {
 
         conversationRepository.save(conversation);
         messageRepository.pushMessage(id, message);
+
+        chatController.chatEndpoint(message);
     }
 
     private void createConversationWithMessage(Conversation conversation, FacebookWebhookDtoMessage dtoMessage) {
