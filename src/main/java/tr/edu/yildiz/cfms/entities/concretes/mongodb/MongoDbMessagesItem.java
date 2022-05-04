@@ -11,7 +11,11 @@ import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
-public class MongoDbMessage {
+public class MongoDbMessagesItem {
+    @Getter
+    @Setter
+    private String id;
+
     @Getter
     @Setter
     private LocalDateTime sentDate;
@@ -26,10 +30,6 @@ public class MongoDbMessage {
 
     @Getter
     @Setter
-    private String repliedTo;
-
-    @Getter
-    @Setter
     @Field("attachments")
-    private List<MongoDbMessageAttachment> attachments;
+    private List<MongoDbMessagesAttachment> attachments;
 }

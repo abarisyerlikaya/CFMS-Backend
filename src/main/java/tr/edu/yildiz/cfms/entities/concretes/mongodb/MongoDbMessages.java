@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Document(collection = "messages")
-public class MongoDbMessagesDocument {
+public class MongoDbMessages {
     @Id
     @Getter
     @Setter
@@ -22,5 +22,5 @@ public class MongoDbMessagesDocument {
     @Getter
     @Setter
     @Field("messages")
-    List<MongoDbMessage> messages;
+    List<MongoDbMessagesItem> messages;
 }

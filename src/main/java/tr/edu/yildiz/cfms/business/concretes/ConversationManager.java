@@ -26,7 +26,7 @@ public class ConversationManager implements ConversationService {
         results.addAll(getListFromTelegram(request));
         results.addAll(getListFromTwitter(request));
         results.addAll(getListFromLinkedIn(request));
-        results.add(new Conversation("MyId", Platform.FACEBOOK, "Ahmet", "", LocalDateTime.now()));
+        results.add(new Conversation("MyId", Platform.FACEBOOK, "Ahmet", LocalDateTime.now()));
 
         // Bütün conversationları getiren sorgu
         results = conversationRepository.findAll();
@@ -49,7 +49,7 @@ public class ConversationManager implements ConversationService {
         final Platform platform = request.getPlatform();
         final LocalDateTime dateTime = request.getDate();
 
-        conversationRepository.save(new Conversation(conversationId, platform, message, "", dateTime));
+        conversationRepository.save(new Conversation(conversationId, platform, message, dateTime));
         return null;
     }
 
