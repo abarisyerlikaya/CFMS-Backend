@@ -34,11 +34,6 @@ public class Conversation {
 
     @Getter
     @Setter
-    @Column(name="client_id")
-    private String clientId;
-
-    @Getter
-    @Setter
     @Column(name="last_message_date")
     private LocalDateTime lastMessageDate;
 

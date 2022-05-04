@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @AllArgsConstructor
 @NoArgsConstructor
-public class MongoDbMessageAttachment {
+public class MongoDbMessagesAttachment {
     @Getter
     @Setter
     private String type;
