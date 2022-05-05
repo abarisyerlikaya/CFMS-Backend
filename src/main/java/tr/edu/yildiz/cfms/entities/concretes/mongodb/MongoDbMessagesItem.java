@@ -8,17 +8,18 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
 public class MongoDbMessagesItem {
     @Getter
     @Setter
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @Getter
     @Setter
-    private LocalDateTime sentDate;
+    private LocalDateTime sentDate = LocalDateTime.now();
 
     @Getter
     @Setter
