@@ -5,27 +5,29 @@ import org.springframework.stereotype.Service;
 import tr.edu.yildiz.cfms.api.models.*;
 import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
 import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
+import tr.edu.yildiz.cfms.business.repository.MessageRepository;
 import tr.edu.yildiz.cfms.core.enums.Platform;
+import tr.edu.yildiz.cfms.core.utils.ExternalApiClients;
 import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
+import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessages;
+import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ConversationManager implements ConversationService {
     @Autowired
     private ConversationRepository conversationRepository;
 
+    @Autowired
+    private MessageRepository messageRepository;
+
     @Override
     public List<Conversation> getList(GetConversationsRequest request) {
         List<Conversation> results = new ArrayList<>();
-        results.addAll(getListFromFacebook(request));
-        results.addAll(getListFromWhatsapp(request));
-        results.addAll(getListFromInstagram(request));
-        results.addAll(getListFromTelegram(request));
-        results.addAll(getListFromTwitter(request));
-        results.addAll(getListFromLinkedIn(request));
         results.add(new Conversation("MyId", Platform.FACEBOOK, "Ahmet", LocalDateTime.now()));
 
         // Bütün conversationları getiren sorgu
@@ -43,37 +45,57 @@ public class ConversationManager implements ConversationService {
     }
 
     @Override
-    public Conversation sendMessage(Message request) {
-        final String message = request.getMessage();
-        final String conversationId = request.getConversationId();
-        final Platform platform = request.getPlatform();
-        final LocalDateTime dateTime = request.getDate();
+    public void sendMessage(String conversationId, MongoDbMessagesItem mongoDbMessagesItem) throws Exception {
+        var optional = conversationRepository.findById(conversationId);
 
-        conversationRepository.save(new Conversation(conversationId, platform, message, dateTime));
-        return null;
+        if (optional.isEmpty())
+            throw new Exception("Conversation not found!");
+
+        var conversation = optional.get();
+
+        try {
+            if (!mongoDbMessagesItem.isSentByClient()) { // CSR gonderdiyse mesaj Facebook API'ye de gonderilir
+                String messageId = sendMessageWithExternalApi(conversation, mongoDbMessagesItem);
+                mongoDbMessagesItem.setId(messageId);
+            }
+            conversation.setLastMessageDate(mongoDbMessagesItem.getSentDate());
+            conversationRepository.save(conversation);
+            messageRepository.pushMessage(conversationId, mongoDbMessagesItem);
+        } catch (Exception e) {
+            e.printStackTrace(); // TODO Handle error
+        }
     }
 
-    private List<Conversation> getListFromFacebook(GetConversationsRequest request) {
-        return new ArrayList<>();
+    public void createConversation(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) {
+        String id = conversation.getId();
+        var messages = new ArrayList<MongoDbMessagesItem>();
+        messages.add(mongoDbMessagesItem);
+        var mongoDbMessages = new MongoDbMessages(id, messages);
+
+        conversationRepository.save(conversation);
+        messageRepository.save(mongoDbMessages);
     }
 
-    private List<Conversation> getListFromWhatsapp(GetConversationsRequest request) {
-        return new ArrayList<>();
-    }
+    private String sendMessageWithExternalApi(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) throws Exception {
+        Platform platform = conversation.getPlatform();
+        String messageId = null;
+        switch (platform) {
+            case FACEBOOK:
+                messageId = ExternalApiClients.sendMessageWithFacebook(conversation, mongoDbMessagesItem);
+                break;
+            case INSTAGRAM:
+                break;
+            case TELEGRAM:
+                break;
+            case TWITTER:
+                break;
+            default:
+                return null;
+        }
 
-    private List<Conversation> getListFromInstagram(GetConversationsRequest request) {
-        return new ArrayList<>();
-    }
+        if (messageId == null || messageId.length() <= 0)
+            throw new Exception("Could not send message with " + platform.name() + " API!");
 
-    private List<Conversation> getListFromTelegram(GetConversationsRequest request) {
-        return new ArrayList<>();
-    }
-
-    private List<Conversation> getListFromTwitter(GetConversationsRequest request) {
-        return new ArrayList<>();
-    }
-
-    private List<Conversation> getListFromLinkedIn(GetConversationsRequest request) {
-        return new ArrayList<>();
+        return messageId;
     }
 }

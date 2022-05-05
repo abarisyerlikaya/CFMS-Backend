@@ -9,20 +9,18 @@ import tr.edu.yildiz.cfms.api.dtos.apis.facebook.FacebookApiUserDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoEntry;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoMessage;
+import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
+import tr.edu.yildiz.cfms.api.models.WebSocketClientMessage;
 import tr.edu.yildiz.cfms.business.abstracts.WebhookService;
 import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
 import tr.edu.yildiz.cfms.business.repository.MessageRepository;
-import tr.edu.yildiz.cfms.business.repository.MessageRepositoryDefault;
 import tr.edu.yildiz.cfms.core.enums.Platform;
 import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
-import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessages;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesAttachment;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static java.time.Instant.ofEpochMilli;
 import static java.util.TimeZone.getDefault;
@@ -65,12 +63,12 @@ public class WebhookManager implements WebhookService {
         boolean doesExist = conversationRepository.existsById(conversationId);
 
         if (doesExist) {
-            updateConversationWithMessage(conversationId, lastMessageDate, message);
+            saveFacebookMessage(conversationId, lastMessageDate, message);
         } else {
             Platform platform = Platform.FACEBOOK;
             String clientName = getUserByIdFromFacebook(clientId);
             var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate);
-            createConversationWithMessage(conversation, message);
+            createFacebookConversation(conversation, message);
         }
 
     }
@@ -87,7 +85,7 @@ public class WebhookManager implements WebhookService {
         }
     }
 
-    private void updateConversationWithMessage(String id, LocalDateTime lastMessageDate, FacebookWebhookDtoMessage dtoMessage) {
+    private void saveFacebookMessage(String id, LocalDateTime lastMessageDate, FacebookWebhookDtoMessage dtoMessage) {
         String mId = dtoMessage.getMid();
         boolean sentByClient = true;
         String text = null;
@@ -107,21 +105,12 @@ public class WebhookManager implements WebhookService {
             }
         }
 
-        Optional<Conversation> optional = conversationRepository.findById(id);
-        if (optional.isEmpty())
-            return;
-
-        Conversation conversation = optional.get();
-        conversation.setLastMessageDate(lastMessageDate);
         var message = new MongoDbMessagesItem(mId, lastMessageDate, sentByClient, text, attachments);
-
-        conversationRepository.save(conversation);
-        messageRepository.pushMessage(id, message);
-
-        chatController.chatEndpoint(message);
+        var webSocketClientMessage = new WebSocketClientMessage(id, message);
+        chatController.sendMessage(webSocketClientMessage);
     }
 
-    private void createConversationWithMessage(Conversation conversation, FacebookWebhookDtoMessage dtoMessage) {
+    private void createFacebookConversation(Conversation conversation, FacebookWebhookDtoMessage dtoMessage) {
         String mId = dtoMessage.getMid();
         boolean sentByClient = true;
         String text = null;
@@ -141,14 +130,9 @@ public class WebhookManager implements WebhookService {
             }
         }
 
-        String id = conversation.getId();
         LocalDateTime sentDate = conversation.getLastMessageDate();
-        List<MongoDbMessagesItem> messages = new ArrayList<>();
-        messages.add(new MongoDbMessagesItem(id, sentDate, sentByClient, text, attachments));
-        MongoDbMessages message = new MongoDbMessages(id, messages);
-
-        conversationRepository.save(conversation);
-        messageRepository.save(message);
+        var message = new MongoDbMessagesItem(mId, sentDate, sentByClient, text, attachments);
+        var webSocketClientConversation = new WebSocketClientConversation(conversation, message);
+        chatController.createConversation(webSocketClientConversation);
     }
-
 }
