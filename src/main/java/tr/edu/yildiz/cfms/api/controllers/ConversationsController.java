@@ -26,7 +26,7 @@ public class ConversationsController {
 
     @GetMapping("")
     public Response getList(GetConversationsRequest request) {
-        var conversations = conversationService.getList(request);
+        var conversations = conversationService.getListWithMessages(request);
         return new SuccessDataResponse<>(conversations);
     }
 
