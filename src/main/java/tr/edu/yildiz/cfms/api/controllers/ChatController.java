@@ -34,11 +34,11 @@ public class ChatController {
 
         try {
             conversationService.sendMessage(conversationId, message);
-            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_MESSAGE, message);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.SENT_MESSAGE, message);
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         } catch (Exception e) {
             var error = new WebSocketError("SEND_MESSAGE_ERROR", "Cannot send message!");
-            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_MESSAGE, error, false);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.ERROR, error, false);
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         }
     }

@@ -11,6 +11,8 @@ import java.util.List;
 public interface ConversationService {
     List<Conversation> getList(GetConversationsRequest request);
 
+    List<ConversationDetail> getListWithMessages(GetConversationsRequest request);
+
     ConversationDetail getConversationDetail(GetConversationDetailRequest request);
 
     void sendMessage(String conversationId, MongoDbMessagesItem mongoDbMessagesItem) throws Exception;

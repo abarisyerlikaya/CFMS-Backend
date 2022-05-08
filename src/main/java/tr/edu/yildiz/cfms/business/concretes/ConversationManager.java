@@ -2,9 +2,11 @@ package tr.edu.yildiz.cfms.business.concretes;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import tr.edu.yildiz.cfms.api.models.*;
-import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
+import tr.edu.yildiz.cfms.api.models.ConversationDetail;
+import tr.edu.yildiz.cfms.api.models.GetConversationDetailRequest;
+import tr.edu.yildiz.cfms.api.models.GetConversationsRequest;
 import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
+import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
 import tr.edu.yildiz.cfms.business.repository.MessageRepository;
 import tr.edu.yildiz.cfms.core.enums.Platform;
 import tr.edu.yildiz.cfms.core.utils.ExternalApiClients;
@@ -12,10 +14,8 @@ import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessages;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ConversationManager implements ConversationService {
@@ -27,15 +27,23 @@ public class ConversationManager implements ConversationService {
 
     @Override
     public List<Conversation> getList(GetConversationsRequest request) {
-        List<Conversation> results = new ArrayList<>();
-        results.add(new Conversation("MyId", Platform.FACEBOOK, "Ahmet", LocalDateTime.now()));
+        return conversationRepository.findAll();
+    }
 
-        // Bütün conversationları getiren sorgu
-        results = conversationRepository.findAll();
+    @Override
+    public List<ConversationDetail> getListWithMessages(GetConversationsRequest request) {
+        var conversations = conversationRepository.findAll();
+        var results = new ArrayList<ConversationDetail>();
 
-        // Tabloya yeni bir kayıt ekleme
-        //Message message = Message.builder().message("Barış").conversationId("2").platform(Platform.FACEBOOK).date(LocalDateTime.now()).build();
-        //sendMessage(message);
+        for (var conversation : conversations) {
+            var mongoDbResult = messageRepository.findById(conversation.getId());
+            if (mongoDbResult.isEmpty())
+                continue;
+            var messages = mongoDbResult.get().getMessages();
+            var conversationDetail = new ConversationDetail(conversation, messages);
+            results.add(conversationDetail);
+        }
+
         return results;
     }
 
