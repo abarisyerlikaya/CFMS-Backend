@@ -40,19 +40,24 @@ public class WebhookManager implements WebhookService {
 
 
     @Override
-    public void handleWebhook(FacebookWebhookDto dto) {
+    public void handleFacebookWebhook(FacebookWebhookDto dto) {
         if (!dto.getObject().equals("page"))
             return;
 
         var entries = dto.getEntry();
 
         for (var entry : entries)
-            processEntry(entry);
+            processFacebookEntry(entry);
+
+    }
+
+    @Override
+    public void handleTelegramWebhook(String body) {
 
     }
 
 
-    private void processEntry(FacebookWebhookDtoEntry entry) {
+    private void processFacebookEntry(FacebookWebhookDtoEntry entry) {
         var messaging = entry.getMessagingObject();
         var message = messaging.getMessage();
         String clientId = messaging.getSenderId();
