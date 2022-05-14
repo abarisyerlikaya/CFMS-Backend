@@ -6,9 +6,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import tr.edu.yildiz.cfms.api.controllers.ChatController;
 import tr.edu.yildiz.cfms.api.dtos.apis.facebook.FacebookApiUserDto;
+import tr.edu.yildiz.cfms.api.dtos.apis.telegram.TelegramApiFilePathDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoEntry;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoMessage;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDto;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDtoMessage;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientMessage;
 import tr.edu.yildiz.cfms.business.abstracts.WebhookService;
@@ -20,12 +23,12 @@ import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesAttachment;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.time.Instant.ofEpochMilli;
 import static java.util.TimeZone.getDefault;
-import static tr.edu.yildiz.cfms.core.utils.Constants.FB_BASE_URL;
-import static tr.edu.yildiz.cfms.core.utils.Constants.FB_PAGE_ACCESS_TOKEN;
+import static tr.edu.yildiz.cfms.core.utils.Constants.*;
 
 @Service
 public class WebhookManager implements WebhookService {
@@ -41,8 +44,7 @@ public class WebhookManager implements WebhookService {
 
     @Override
     public void handleFacebookWebhook(FacebookWebhookDto dto) {
-        if (!dto.getObject().equals("page"))
-            return;
+        if (!dto.getObject().equals("page")) return;
 
         var entries = dto.getEntry();
 
@@ -52,8 +54,11 @@ public class WebhookManager implements WebhookService {
     }
 
     @Override
-    public void handleTelegramWebhook(String body) {
+    public void handleTelegramWebhook(TelegramWebhookDto dto) {
+        var message = dto.getMessage();
+        if (message == null) return;
 
+        processTelegramMessage(message);
     }
 
 
@@ -96,16 +101,15 @@ public class WebhookManager implements WebhookService {
         String text = null;
         List<MongoDbMessagesAttachment> attachments = null;
 
-        if (dtoMessage.isTextMessage())
-            text = dtoMessage.getText();
+        if (dtoMessage.isTextMessage()) text = dtoMessage.getText();
         if (dtoMessage.hasAttachment()) {
+            attachments = new ArrayList<>();
             var dtoAttachments = dtoMessage.getAttachments();
             for (var item : dtoAttachments) {
                 String url = null;
                 String type = item.getType();
                 var payload = item.getPayload();
-                if (payload != null)
-                    url = payload.getUrl();
+                if (payload != null) url = payload.getUrl();
                 attachments.add(new MongoDbMessagesAttachment(type, url));
             }
         }
@@ -121,16 +125,14 @@ public class WebhookManager implements WebhookService {
         String text = null;
         List<MongoDbMessagesAttachment> attachments = null;
 
-        if (dtoMessage.isTextMessage())
-            text = dtoMessage.getText();
+        if (dtoMessage.isTextMessage()) text = dtoMessage.getText();
         if (dtoMessage.hasAttachment()) {
             var dtoAttachments = dtoMessage.getAttachments();
             for (var item : dtoAttachments) {
                 String url = null;
                 String type = item.getType();
                 var payload = item.getPayload();
-                if (payload != null)
-                    url = payload.getUrl();
+                if (payload != null) url = payload.getUrl();
                 attachments.add(new MongoDbMessagesAttachment(type, url));
             }
         }
@@ -139,5 +141,106 @@ public class WebhookManager implements WebhookService {
         var message = new MongoDbMessagesItem(mId, sentDate, sentByClient, text, attachments);
         var webSocketClientConversation = new WebSocketClientConversation(conversation, message);
         chatController.createConversation(webSocketClientConversation);
+    }
+
+    private void processTelegramMessage(TelegramWebhookDtoMessage message) {
+        var from = message.getFrom();
+        String clientName = from.getFirstName() + " " + from.getLastName();
+        LocalDateTime lastMessageDate = LocalDateTime.ofInstant(ofEpochMilli(message.getDate()), getDefault().toZoneId());
+        String conversationId = Long.toString(message.getChat().getId());
+
+        boolean doesExist = conversationRepository.existsById(conversationId);
+
+        if (doesExist) {
+            saveTelegramMessage(conversationId, lastMessageDate, message);
+        } else {
+            Platform platform = Platform.TELEGRAM;
+            var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate);
+            createTelegramConversation(conversation, message);
+        }
+    }
+
+    private void saveTelegramMessage(String conversationId, LocalDateTime lastMessageDate, TelegramWebhookDtoMessage dtoMessage) {
+        String mId = Long.toString(dtoMessage.getMessageId());
+        boolean sentByClient = true;
+        String text = null;
+        List<MongoDbMessagesAttachment> attachments = null;
+
+        if (dtoMessage.isTextMessage()) text = dtoMessage.getText();
+        if (dtoMessage.hasAttachment()) {
+            var attachment = getAttachmentFromTelegram(dtoMessage);
+            if (attachment != null) {
+                attachments = new ArrayList<>();
+                attachments.add(attachment);
+            }
+        }
+
+        var message = new MongoDbMessagesItem(mId, lastMessageDate, sentByClient, text, attachments);
+        var webSocketClientMessage = new WebSocketClientMessage(conversationId, message);
+        chatController.sendMessage(webSocketClientMessage);
+    }
+
+    private void createTelegramConversation(Conversation conversation, TelegramWebhookDtoMessage dtoMessage) {
+        String mId = Long.toString(dtoMessage.getMessageId());
+        boolean sentByClient = true;
+        String text = null;
+        List<MongoDbMessagesAttachment> attachments = null;
+
+        if (dtoMessage.isTextMessage())
+            text = dtoMessage.getText();
+        if (dtoMessage.hasAttachment()) {
+            var attachment = getAttachmentFromTelegram(dtoMessage);
+            if (attachment != null) {
+                attachments = new ArrayList<>();
+                attachments.add(attachment);
+            }
+        }
+
+        LocalDateTime sentDate = conversation.getLastMessageDate();
+        var message = new MongoDbMessagesItem(mId, sentDate, sentByClient, text, attachments);
+        var webSocketClientConversation = new WebSocketClientConversation(conversation, message);
+        chatController.createConversation(webSocketClientConversation);
+    }
+
+    private MongoDbMessagesAttachment getAttachmentFromTelegram(TelegramWebhookDtoMessage dtoMessage) {
+        try {
+            var photos = dtoMessage.getPhoto();
+            var video = dtoMessage.getVideo();
+            var voice = dtoMessage.getVoice();
+            var document = dtoMessage.getDocument();
+            String fileId = null;
+            String fileType = null;
+
+            if (photos != null && photos.size() > 0) {
+                fileId = photos.get(photos.size() - 1).getFileId();
+                fileType = "image";
+            } else if (video != null) {
+                fileId = video.getFileId();
+                fileType = "audio";
+            } else if (voice != null) {
+                fileId = voice.getFileId();
+                fileType = "video";
+            } else if (document != null) {
+                fileId = document.getFileId();
+                fileType = "file";
+            }
+
+            if (fileId == null)
+                return null;
+
+            String url = TELEGRAM_BASE_URL + "/bot" + TELEGRAM_TOKEN + "/getFile?file_id=" + fileId;
+            WebClient client = WebClient.create(url);
+            Mono<TelegramApiFilePathDto> mono = client.get().retrieve().bodyToMono(TelegramApiFilePathDto.class);
+            var dto = mono.block();
+            var result = dto.getResult();
+            if (!dto.isOk() || result == null)
+                return null;
+            String filePath = result.getFilePath();
+            String fileUrl = TELEGRAM_BASE_URL + "/bot" + TELEGRAM_TOKEN + "/" + filePath;
+            return new MongoDbMessagesAttachment(fileType, fileUrl);
+
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
