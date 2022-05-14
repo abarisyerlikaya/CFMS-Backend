@@ -94,6 +94,7 @@ public class ConversationManager implements ConversationService {
             case INSTAGRAM:
                 break;
             case TELEGRAM:
+                messageId = ExternalApiClients.sendMessageWithTelegram(conversation, mongoDbMessagesItem);
                 break;
             case TWITTER:
                 break;
