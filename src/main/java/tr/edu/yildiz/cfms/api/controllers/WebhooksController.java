@@ -13,11 +13,13 @@ import tr.edu.yildiz.cfms.core.response_types.SuccessResponse;
 public class WebhooksController {
     @Autowired
     private WebhookService webhookService;
+
+
     private static final String VERIFY_TOKEN = "EAAE0ZBjxLFEQBACbTM5ZAzLWYECXWuu4rlSo8QQRzJQv551FQIQtNjxWAEBvShjZCOCd4SIOQGdyDhKjSnGfZArOC1z6rDf4B7OaOG9Ubsg6VGOZAnr8XsODooZCVZCA2I7LvIpPnfApgknn3Rod3RoqJHF7nX30F3ubbAXzA7nur2RuZCVT2KeZBKThBguxAOTYZD";
 
     @PostMapping("/facebook")
     public Response handleFacebookWebhook(@RequestBody FacebookWebhookDto dto) {
-        webhookService.handleWebhook(dto);
+        webhookService.handleFacebookWebhook(dto);
         return new SuccessResponse();
     }
 
@@ -25,5 +27,11 @@ public class WebhooksController {
     public String verifyFacebookWebhook(@RequestParam("hub.verify_token") String token, @RequestParam("hub.challenge") String challenge) {
         if (token != null && token.equals(VERIFY_TOKEN)) return challenge;
         return "Not verified!";
+    }
+
+    @PostMapping("/telegram")
+    public Response handleTelegramWebhook(@RequestBody String body) {
+        webhookService.handleTelegramWebhook(body);
+        return new SuccessResponse();
     }
 }

@@ -5,5 +5,6 @@ import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
 
 @Service
 public interface WebhookService {
-    void handleWebhook(FacebookWebhookDto dto);
+    void handleFacebookWebhook(FacebookWebhookDto dto);
+    void handleTelegramWebhook(String body);
 }
