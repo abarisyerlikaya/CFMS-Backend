@@ -3,11 +3,15 @@ package tr.edu.yildiz.cfms.api.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDtoFrom;
 import tr.edu.yildiz.cfms.business.abstracts.WebhookService;
 import tr.edu.yildiz.cfms.core.response_types.Response;
 import tr.edu.yildiz.cfms.core.response_types.SuccessResponse;
+import tr.edu.yildiz.cfms.core.utils.ExternalApiClients;
+
+import java.io.IOException;
 
 import static tr.edu.yildiz.cfms.core.utils.Constants.TELEGRAM_TOKEN;
 
@@ -41,6 +45,12 @@ public class WebhooksController {
 
     @GetMapping("/telegram")
     public Response verifyTelegramWebhook() {
+        return new SuccessResponse();
+    }
+
+    @PostMapping("/newinstagram")
+    public Response verifyInstagramWebhook(@RequestBody InstagramConversationDto dto) throws IOException {
+        webhookService.handleInstagramConversation(dto);
         return new SuccessResponse();
     }
 }
