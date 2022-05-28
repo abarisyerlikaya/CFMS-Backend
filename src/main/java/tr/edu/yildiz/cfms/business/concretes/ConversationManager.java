@@ -2,6 +2,7 @@ package tr.edu.yildiz.cfms.business.concretes;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
 import tr.edu.yildiz.cfms.api.models.ConversationDetail;
 import tr.edu.yildiz.cfms.api.models.GetConversationDetailRequest;
 import tr.edu.yildiz.cfms.api.models.GetConversationsRequest;
@@ -14,6 +15,7 @@ import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessages;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,6 +94,7 @@ public class ConversationManager implements ConversationService {
                 messageId = ExternalApiClients.sendMessageWithFacebook(conversation, mongoDbMessagesItem);
                 break;
             case INSTAGRAM:
+                messageId = ExternalApiClients.sendMessageWithInstagram(conversation, mongoDbMessagesItem);
                 break;
             case TELEGRAM:
                 messageId = ExternalApiClients.sendMessageWithTelegram(conversation, mongoDbMessagesItem);

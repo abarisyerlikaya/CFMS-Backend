@@ -10,6 +10,7 @@ import tr.edu.yildiz.cfms.api.dtos.apis.telegram.TelegramApiFilePathDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoEntry;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoMessage;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDtoMessage;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
@@ -19,6 +20,7 @@ import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
 import tr.edu.yildiz.cfms.business.repository.MessageRepository;
 import tr.edu.yildiz.cfms.core.enums.Platform;
 import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
+import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessages;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesAttachment;
 
@@ -59,6 +61,35 @@ public class WebhookManager implements WebhookService {
         if (message == null) return;
 
         processTelegramMessage(message);
+    }
+
+    @Override
+    public void handleInstagramConversation(InstagramConversationDto dto){
+        Conversation conversation = new Conversation();
+        conversation.setId(dto.getId());
+        conversation.setClientName(dto.getClientName());
+        conversation.setLastMessageDate(LocalDateTime.parse(dto.getLastMessageDate()));
+        conversation.setPlatform(Platform.INSTAGRAM);
+
+
+        List<MongoDbMessagesItem> messages = new ArrayList<>();
+
+        for (var message : dto.getMessages()) {
+            MongoDbMessagesItem mongoDbMessagesItem = new MongoDbMessagesItem();
+            mongoDbMessagesItem.setText(message.getText());
+            mongoDbMessagesItem.setSentDate(LocalDateTime.parse(message.getDate()));
+            mongoDbMessagesItem.setId(message.getId());
+            mongoDbMessagesItem.setSentByClient(message.isClient());
+            messages.add(mongoDbMessagesItem);
+        }
+
+        MongoDbMessages mongoDbMessages = new MongoDbMessages();
+        mongoDbMessages.setId(dto.getId());
+        mongoDbMessages.setMessages(messages);
+
+        conversationRepository.save(conversation);
+        messageRepository.save(mongoDbMessages);
+
     }
 
 
