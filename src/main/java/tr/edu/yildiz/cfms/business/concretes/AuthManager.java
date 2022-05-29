@@ -34,10 +34,10 @@ public class AuthManager implements AuthService {
         try {
             var authenticateRequest = new UsernamePasswordAuthenticationToken(username, password);
             authenticationManager.authenticate(authenticateRequest);
-            var userDetails = userService.loadUserByUsername(username);
-            if (!userDetails.getPassword().equals(password))
+            var user = userService.getByUsername(username);
+            if (!user.getPassword().equals(password))
                 throw new BadCredentialsException("Incorrect username or password!");
-            var data = new LoginResponseData(jwtUtil.generateToken(userDetails));
+            var data = new LoginResponseData(jwtUtil.generateToken(user));
             return new SuccessDataResponse<>(data);
         } catch (BadCredentialsException | UsernameNotFoundException e) {
             return new Response(false, HttpStatus.UNAUTHORIZED, "Incorrect username or password!");
