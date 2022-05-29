@@ -6,6 +6,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import tr.edu.yildiz.cfms.api.models.LoginRequest;
 import tr.edu.yildiz.cfms.api.models.LoginResponseData;
@@ -34,14 +35,14 @@ public class AuthManager implements AuthService {
             var authenticateRequest = new UsernamePasswordAuthenticationToken(username, password);
             authenticationManager.authenticate(authenticateRequest);
             var userDetails = userService.loadUserByUsername(username);
+            if (!userDetails.getPassword().equals(password))
+                throw new BadCredentialsException("Incorrect username or password!");
             var data = new LoginResponseData(jwtUtil.generateToken(userDetails));
             return new SuccessDataResponse<>(data);
-        } catch (BadCredentialsException e) {
+        } catch (BadCredentialsException | UsernameNotFoundException e) {
             return new Response(false, HttpStatus.UNAUTHORIZED, "Incorrect username or password!");
         } catch (Exception e) {
             return new Response(false, HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred!");
         }
-
-
     }
 }
