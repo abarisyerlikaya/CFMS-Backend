@@ -17,7 +17,7 @@ public class InstagramConversationDtoMessages {
 
     @Getter
     @Setter
-    private boolean isClient;
+    private Boolean isClient;
 
     @Getter
     @Setter

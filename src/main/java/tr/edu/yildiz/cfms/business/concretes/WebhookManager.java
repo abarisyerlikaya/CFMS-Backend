@@ -64,12 +64,9 @@ public class WebhookManager implements WebhookService {
     }
 
     @Override
-    public void handleInstagramConversation(InstagramConversationDto dto){
-        Conversation conversation = new Conversation();
-        conversation.setId(dto.getId());
-        conversation.setClientName(dto.getClientName());
-        conversation.setLastMessageDate(LocalDateTime.parse(dto.getLastMessageDate()));
-        conversation.setPlatform(Platform.INSTAGRAM);
+    public void handleInstagramConversation(InstagramConversationDto dto, Boolean isNew){
+
+        if (isNew) newInstagramConversation(dto);
 
 
         List<MongoDbMessagesItem> messages = new ArrayList<>();
@@ -79,7 +76,7 @@ public class WebhookManager implements WebhookService {
             mongoDbMessagesItem.setText(message.getText());
             mongoDbMessagesItem.setSentDate(LocalDateTime.parse(message.getDate()));
             mongoDbMessagesItem.setId(message.getId());
-            mongoDbMessagesItem.setSentByClient(message.isClient());
+            mongoDbMessagesItem.setSentByClient(message.getIsClient());
             messages.add(mongoDbMessagesItem);
         }
 
@@ -87,9 +84,18 @@ public class WebhookManager implements WebhookService {
         mongoDbMessages.setId(dto.getId());
         mongoDbMessages.setMessages(messages);
 
-        conversationRepository.save(conversation);
         messageRepository.save(mongoDbMessages);
 
+    }
+
+    private void newInstagramConversation(InstagramConversationDto dto){
+        Conversation conversation = new Conversation();
+        conversation.setId(dto.getId());
+        conversation.setClientName(dto.getClientName());
+        conversation.setLastMessageDate(LocalDateTime.parse(dto.getLastMessageDate()));
+        conversation.setPlatform(Platform.INSTAGRAM);
+
+        conversationRepository.save(conversation);
     }
 
 
