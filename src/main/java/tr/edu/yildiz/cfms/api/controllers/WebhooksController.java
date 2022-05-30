@@ -49,8 +49,14 @@ public class WebhooksController {
     }
 
     @PostMapping("/newinstagram")
-    public Response verifyInstagramWebhook(@RequestBody InstagramConversationDto dto) throws IOException {
-        webhookService.handleInstagramConversation(dto);
+    public Response newInstagramConversation(@RequestBody InstagramConversationDto dto) throws IOException {
+        webhookService.handleInstagramConversation(dto, Boolean.TRUE);
+        return new SuccessResponse();
+    }
+
+    @PostMapping("/updateinstagram")
+    public Response updateInstagramConversation(@RequestBody InstagramConversationDto dto) throws IOException {
+        webhookService.handleInstagramConversation(dto, Boolean.FALSE);
         return new SuccessResponse();
     }
 }
