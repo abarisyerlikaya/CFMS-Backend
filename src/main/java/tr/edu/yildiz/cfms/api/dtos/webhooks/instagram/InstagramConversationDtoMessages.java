@@ -1,5 +1,6 @@
 package tr.edu.yildiz.cfms.api.dtos.webhooks.instagram;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +18,8 @@ public class InstagramConversationDtoMessages {
 
     @Getter
     @Setter
-    private boolean isClient;
+    @JsonProperty("sentByClient")
+    private Boolean isClient;
 
     @Getter
     @Setter

@@ -9,5 +9,5 @@ import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDto;
 public interface WebhookService {
     void handleFacebookWebhook(FacebookWebhookDto dto);
     void handleTelegramWebhook(TelegramWebhookDto dto);
-    void handleInstagramConversation(InstagramConversationDto dto);
+    void handleInstagramConversation(InstagramConversationDto dto, Boolean isNew);
 }
