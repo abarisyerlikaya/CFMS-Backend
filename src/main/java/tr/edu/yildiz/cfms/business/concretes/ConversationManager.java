@@ -17,6 +17,7 @@ import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -71,6 +72,31 @@ public class ConversationManager implements ConversationService {
             conversation.setLastMessageDate(mongoDbMessagesItem.getSentDate());
             conversationRepository.save(conversation);
             messageRepository.pushMessage(conversationId, mongoDbMessagesItem);
+        } catch (Exception e) {
+            e.printStackTrace(); // TODO Handle error
+        }
+    }
+
+    @Override
+    public void sendMessages(String conversationId, List<MongoDbMessagesItem> mongoDbMessagesItems) throws Exception {
+        var optional = conversationRepository.findById(conversationId);
+
+        if (optional.isEmpty())
+            throw new Exception("Conversation not found!");
+
+        var conversation = optional.get();
+
+        try {
+            conversation.setLastMessageDate(mongoDbMessagesItems.get(0).getSentDate());
+            Collections.reverse(mongoDbMessagesItems);
+            for (var mongoDbMessagesItem : mongoDbMessagesItems) {
+                if (!mongoDbMessagesItem.isSentByClient()) {
+                    String messageId = sendMessageWithExternalApi(conversation, mongoDbMessagesItem);
+                    mongoDbMessagesItem.setId(messageId);
+                }
+                messageRepository.pushMessage(conversationId, mongoDbMessagesItem);
+            }
+            conversationRepository.save(conversation);
         } catch (Exception e) {
             e.printStackTrace(); // TODO Handle error
         }

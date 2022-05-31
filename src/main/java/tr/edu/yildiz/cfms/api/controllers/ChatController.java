@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientMessage;
+import tr.edu.yildiz.cfms.api.models.WebSocketClientMessages;
 import tr.edu.yildiz.cfms.core.response_types.WebSocketError;
 import tr.edu.yildiz.cfms.core.response_types.WebSocketServerMessage;
 import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
@@ -41,6 +42,24 @@ public class ChatController {
             var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.ERROR, error, false);
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         }
+    }
+
+    @MessageMapping("/send-messages")
+    @SendTo("/topic")
+    public void sendMessages(@Payload WebSocketClientMessages webSocketClientMessages) {
+        String conversationId = webSocketClientMessages.getConversationId();
+        var messages = webSocketClientMessages.getMessages();
+
+        try {
+            conversationService.sendMessages(conversationId, messages);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.SENT_MESSAGES, messages);
+            simpMessagingTemplate.convertAndSend("/topic", serverMessage);
+        } catch (Exception e) {
+            var error = new WebSocketError("SEND_MESSAGES_ERROR", "Cannot send messages!");
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.ERROR, error, false);
+            simpMessagingTemplate.convertAndSend("/topic", serverMessage);
+        }
+
     }
 
     // Musteriden ilk mesaj geldiginde webhook burayi cagiracak

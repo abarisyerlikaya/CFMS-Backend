@@ -15,6 +15,7 @@ import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDtoMessage;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientMessage;
+import tr.edu.yildiz.cfms.api.models.WebSocketClientMessages;
 import tr.edu.yildiz.cfms.business.abstracts.WebhookService;
 import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
 import tr.edu.yildiz.cfms.business.repository.MessageRepository;
@@ -66,9 +67,6 @@ public class WebhookManager implements WebhookService {
     @Override
     public void handleInstagramConversation(InstagramConversationDto dto, Boolean isNew){
 
-        if (isNew) newInstagramConversation(dto);
-
-
         List<MongoDbMessagesItem> messages = new ArrayList<>();
 
         for (var message : dto.getMessages()) {
@@ -80,22 +78,42 @@ public class WebhookManager implements WebhookService {
             messages.add(mongoDbMessagesItem);
         }
 
-        MongoDbMessages mongoDbMessages = new MongoDbMessages();
-        mongoDbMessages.setId(dto.getId());
-        mongoDbMessages.setMessages(messages);
-
-        messageRepository.save(mongoDbMessages);
+        if (isNew) createInstagramConversation(dto, messages);
+        else updateInstagramConversation(dto, messages);
 
     }
 
-    private void newInstagramConversation(InstagramConversationDto dto){
+    private void createInstagramConversation(InstagramConversationDto dto, List<MongoDbMessagesItem> messages) {
         Conversation conversation = new Conversation();
         conversation.setId(dto.getId());
         conversation.setClientName(dto.getClientName());
         conversation.setLastMessageDate(LocalDateTime.parse(dto.getLastMessageDate()));
         conversation.setPlatform(Platform.INSTAGRAM);
 
-        conversationRepository.save(conversation);
+        WebSocketClientConversation webSocketClientConversation = new WebSocketClientConversation();
+        webSocketClientConversation.setConversation(conversation);
+        webSocketClientConversation.setMessage(messages.get(0));
+
+        chatController.createConversation(webSocketClientConversation);
+
+        if (messages.size() > 1) {
+            messages.remove(0);
+            WebSocketClientMessages webSocketClientMessages = new WebSocketClientMessages();
+            webSocketClientMessages.setMessages(messages);
+            webSocketClientMessages.setConversationId(dto.getId());
+            chatController.sendMessages(webSocketClientMessages);
+        }
+
+    }
+
+    private void updateInstagramConversation(InstagramConversationDto dto, List<MongoDbMessagesItem> messages) {
+
+
+        WebSocketClientMessages webSocketClientMessages = new WebSocketClientMessages();
+        webSocketClientMessages.setMessages(messages);
+        webSocketClientMessages.setConversationId(dto.getId());
+
+        chatController.sendMessages(webSocketClientMessages);
     }
 
 

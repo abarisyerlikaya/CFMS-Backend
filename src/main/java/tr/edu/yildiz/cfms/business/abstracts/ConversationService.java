@@ -17,5 +17,7 @@ public interface ConversationService {
 
     void sendMessage(String conversationId, MongoDbMessagesItem mongoDbMessagesItem) throws Exception;
 
+    void sendMessages(String conversationId, List<MongoDbMessagesItem> mongoDbMessagesItem) throws Exception;
+
     void createConversation(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem);
 }
