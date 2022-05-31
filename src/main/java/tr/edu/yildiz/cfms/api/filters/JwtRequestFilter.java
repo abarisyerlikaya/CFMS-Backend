@@ -30,7 +30,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authorizationHeader = request.getHeader("Authorization");
 
-
         String jwt = authorizationHeader.startsWith(BEARER) ? authorizationHeader.substring(BEARER_LENGTH) : authorizationHeader;
         String username = jwtUtil.extractUsername(jwt);
 
@@ -53,6 +52,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return request.getRequestURI().startsWith("/api/login");
+        String path = request.getRequestURI();
+        boolean result = path.startsWith("/api/login") ||
+                path.startsWith("/chat") ||
+                path.startsWith("/send-message") ||
+                path.startsWith("/create-conversation") ||
+                path.startsWith("/topic");
+        return result;
     }
 }

@@ -5,10 +5,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@NoArgsConstructor
 @AllArgsConstructor
-public class GetConversationsRequest extends PaginationRequest {
+@NoArgsConstructor
+public class PaginationRequest {
     @Getter
     @Setter
-    boolean withMessages = false;
+    int offset = 0;
+
+    @Getter
+    @Setter
+    int limit = 10;
 }
