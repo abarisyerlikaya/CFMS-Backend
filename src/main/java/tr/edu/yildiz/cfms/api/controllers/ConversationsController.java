@@ -1,6 +1,7 @@
 package tr.edu.yildiz.cfms.api.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import tr.edu.yildiz.cfms.api.models.ConversationDetail;
 import tr.edu.yildiz.cfms.api.models.GetConversationsRequest;
@@ -31,9 +32,12 @@ public class ConversationsController {
     }
 
     @GetMapping("/{conversationId}")
-    public ConversationDetail getConversationDetail(@PathVariable String conversationId, GetConversationDetailRequest request) {
+    public Response getConversationDetail(@PathVariable String conversationId, GetConversationDetailRequest request) {
         request.setConversationId(conversationId);
-        return conversationService.getConversationDetail(request);
+        var conversation = conversationService.getConversationDetail(request);
+        if (conversation == null)
+            return new Response(false, HttpStatus.NOT_FOUND, "Conversation not found!");
+        return new SuccessDataResponse<>(conversation);
     }
 
 
