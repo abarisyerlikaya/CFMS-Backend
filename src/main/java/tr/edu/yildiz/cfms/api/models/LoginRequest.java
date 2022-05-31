@@ -5,10 +5,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@NoArgsConstructor
 @AllArgsConstructor
-public class GetConversationsRequest extends PaginationRequest {
+@NoArgsConstructor
+public class LoginRequest {
     @Getter
     @Setter
-    boolean withMessages = false;
+    private String username;
+
+    @Getter
+    @Setter
+    private String password;
 }

@@ -1,6 +1,7 @@
 package tr.edu.yildiz.cfms.business.concretes;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
 import tr.edu.yildiz.cfms.api.models.ConversationDetail;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ConversationManager implements ConversationService {
@@ -28,6 +30,10 @@ public class ConversationManager implements ConversationService {
     @Autowired
     private MessageRepository messageRepository;
 
+    @Autowired
+    private SessionRegistry sessionRegistry;
+
+
     @Override
     public List<Conversation> getList(GetConversationsRequest request) {
         return conversationRepository.findAll();
@@ -35,24 +41,52 @@ public class ConversationManager implements ConversationService {
 
     @Override
     public List<ConversationDetail> getListWithMessages(GetConversationsRequest request) {
+        var principles = sessionRegistry.getAllPrincipals();
+
         var conversations = conversationRepository.findAll();
         var results = new ArrayList<ConversationDetail>();
 
+        boolean withMessages = request.isWithMessages();
+
         for (var conversation : conversations) {
-            var mongoDbResult = messageRepository.findById(conversation.getId());
-            if (mongoDbResult.isEmpty())
-                continue;
-            var messages = mongoDbResult.get().getMessages();
+            List<MongoDbMessagesItem> messages = null;
+            if (withMessages) {
+                var mongoDbResult = messageRepository.findById(conversation.getId());
+                if (mongoDbResult.isPresent())
+                    messages = mongoDbResult.get().getMessages();
+            }
             var conversationDetail = new ConversationDetail(conversation, messages);
             results.add(conversationDetail);
         }
 
-        return results;
+        return results.stream().skip(request.getOffset()).limit(request.getLimit()).collect(Collectors.toList());
     }
 
     @Override
     public ConversationDetail getConversationDetail(GetConversationDetailRequest request) {
-        return null;
+        List<MongoDbMessagesItem> messages = null;
+        String id = request.getConversationId();
+        boolean withMessages = request.isWithMessages();
+
+        var optionalConversation = conversationRepository.findById(id);
+        if (optionalConversation.isEmpty())
+            return null;
+        var conversation = optionalConversation.get();
+
+        if (withMessages) {
+            var mongoDbResult = messageRepository.findById(request.getConversationId());
+            if (mongoDbResult.isPresent()) {
+                messages = mongoDbResult.get().getMessages();
+                if (messages.size() > request.getLimit()) {
+                    int endIndex = messages.size() - request.getOffset();
+                    int startIndex = endIndex - request.getLimit();
+                    if (startIndex < 0) startIndex = 0;
+                    messages = messages.subList(startIndex, endIndex);
+                }
+            }
+        }
+
+        return new ConversationDetail(conversation, messages);
     }
 
     @Override
