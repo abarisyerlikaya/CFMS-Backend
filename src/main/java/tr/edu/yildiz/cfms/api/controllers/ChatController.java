@@ -5,6 +5,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
@@ -20,8 +21,13 @@ import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 @Controller
 @CrossOrigin(origins = "*")
 public class ChatController {
+
+
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
+
+    @Autowired
+    private SessionRegistry sessionRegistry;
 
     @Autowired
     private ConversationService conversationService;
@@ -66,6 +72,7 @@ public class ChatController {
     @MessageMapping("/create-conversation")
     @SendTo("/topic")
     public void createConversation(@Payload WebSocketClientConversation webSocketClientConversation) {
+        sessionRegistry.getAllPrincipals();
         Conversation conversation = webSocketClientConversation.getConversation();
         MongoDbMessagesItem message = webSocketClientConversation.getMessage();
 
