@@ -7,6 +7,7 @@ import lombok.Setter;
 public class TwitterWebhookDtoMessageCreate {
     @Getter
     @Setter
+    @JsonProperty("sender_id")
     private String senderId;
 
     @Getter

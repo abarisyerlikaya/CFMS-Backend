@@ -8,6 +8,7 @@ import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDtoFrom;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.twitter.TwitterWebhookDto;
 import tr.edu.yildiz.cfms.business.abstracts.WebhookService;
 import tr.edu.yildiz.cfms.core.response_types.Response;
 import tr.edu.yildiz.cfms.core.response_types.SuccessDataResponse;
@@ -90,7 +91,7 @@ public class WebhooksController {
     }
 
     @PostMapping("/twitter")
-    public Response handleTwitterWebhookPost(@RequestBody String body) {
+    public Response handleTwitterWebhookPost(@RequestBody TwitterWebhookDto dto) {
         System.out.println("Webhook2!!!!");
         return new SuccessResponse("");
     }

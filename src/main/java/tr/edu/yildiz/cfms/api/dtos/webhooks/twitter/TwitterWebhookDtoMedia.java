@@ -15,6 +15,26 @@ public class TwitterWebhookDtoMedia {
     @JsonProperty("media_url")
     private String mediaUrl;
 
+    @Getter
+    @Setter
+    private String url;
 
+    @Getter
+    @Setter
+    @JsonProperty("display_url")
+    private String displayUrl;
 
+    @Getter
+    @Setter
+    @JsonProperty("expanded_url")
+    private String expandedUrl;
+
+    @Getter
+    @Setter
+    private String type;
+
+    @Getter
+    @Setter
+    @JsonProperty("video_info")
+    private TwitterWebhookDtoVideoInfo videoInfo;
 }
