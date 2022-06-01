@@ -121,13 +121,8 @@ public class ConversationManager implements ConversationService {
         var conversation = optional.get();
 
         try {
-            conversation.setLastMessageDate(mongoDbMessagesItems.get(0).getSentDate());
-            Collections.reverse(mongoDbMessagesItems);
+            conversation.setLastMessageDate(mongoDbMessagesItems.get(mongoDbMessagesItems.size()-1).getSentDate());
             for (var mongoDbMessagesItem : mongoDbMessagesItems) {
-                if (!mongoDbMessagesItem.isSentByClient()) {
-                    String messageId = sendMessageWithExternalApi(conversation, mongoDbMessagesItem);
-                    mongoDbMessagesItem.setId(messageId);
-                }
                 messageRepository.pushMessage(conversationId, mongoDbMessagesItem);
             }
             conversationRepository.save(conversation);
