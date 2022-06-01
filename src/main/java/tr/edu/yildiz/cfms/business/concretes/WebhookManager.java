@@ -1,5 +1,6 @@
 package tr.edu.yildiz.cfms.business.concretes;
 
+import org.brunocvcunha.instagram4j.Instagram4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -27,6 +28,7 @@ import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesAttachment;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static java.time.Instant.ofEpochMilli;
@@ -78,11 +80,12 @@ public class WebhookManager implements WebhookService {
             messages.add(mongoDbMessagesItem);
         }
 
+        Collections.reverse(messages);
+
         if (isNew) createInstagramConversation(dto, messages);
         else updateInstagramConversation(dto, messages);
 
     }
-
     private void createInstagramConversation(InstagramConversationDto dto, List<MongoDbMessagesItem> messages) {
         Conversation conversation = new Conversation();
         conversation.setId(dto.getId());
