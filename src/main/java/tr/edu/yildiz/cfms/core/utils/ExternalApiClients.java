@@ -89,15 +89,6 @@ public class ExternalApiClients {
             InstagramDirectShareRequest.ShareType type = InstagramDirectShareRequest.ShareType.MESSAGE;
             instagram.sendRequest(InstagramDirectShareRequest.builder().shareType(type).message(messageText).threadId(conversationId).build());
 
-//
-//        List<String> receipents = new ArrayList<String>();
-//        receipents.add(String.valueOf(user.getPk()));
-//
-//        String messageText = "Merhaba";
-//
-//        InstagramDirectShareRequest.ShareType type = InstagramDirectShareRequest.ShareType.MESSAGE;
-//
-//        instagram.sendRequest(InstagramDirectShareRequest.builder().shareType(type).message("31").recipients(receipents).build());
             inbox = instagram.sendRequest(new InstagramGetInboxRequest());
             for (InstagramInboxThread thread : inbox.getInbox().getThreads()) {
                 if (thread.getThread_id().equals(conversationId)) {
@@ -117,7 +108,6 @@ public class ExternalApiClients {
 
 
         return newConversationId;
-
     }
 
     public static String sendMessageWithTwitter(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) {
