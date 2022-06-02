@@ -7,25 +7,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.brunocvcunha.instagram4j.Instagram4j;
 import org.brunocvcunha.instagram4j.requests.InstagramDirectShareRequest;
-import org.brunocvcunha.instagram4j.requests.InstagramDirectShareRequest.ShareType.*;
-import org.brunocvcunha.instagram4j.requests.InstagramSearchUsernameRequest;
-import org.brunocvcunha.instagram4j.requests.payload.InstagramSearchUsernameResult;
-import org.brunocvcunha.instagram4j.requests.payload.InstagramUser;
-import org.brunocvcunha.instagram4j.requests.payload.StatusResult;
+import org.brunocvcunha.instagram4j.requests.InstagramGetInboxRequest;
+import org.brunocvcunha.instagram4j.requests.InstagramGetInboxThreadRequest;
+import org.brunocvcunha.instagram4j.requests.payload.*;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import tr.edu.yildiz.cfms.api.dtos.apis.facebook.FacebookApiUserDto;
-import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
-import tr.edu.yildiz.cfms.business.concretes.ConversationManager;
-import tr.edu.yildiz.cfms.core.enums.Platform;
 import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
-import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessages;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static tr.edu.yildiz.cfms.core.utils.Constants.*;
 import static tr.edu.yildiz.cfms.core.utils.Constants.TELEGRAM_TOKEN;
@@ -77,39 +70,6 @@ public class ExternalApiClients {
         return Long.toString(result.getMessageId());
     }
 
-    public static String createInstagramConversation(InstagramConversationDto dto) throws IOException {
-
-//        ConversationManager conversationManager = new ConversationManager();
-//
-//        Conversation conversation = new Conversation();
-//        conversation.setId(dto.getId());
-//        conversation.setClientName(dto.getClientName());
-//        conversation.setLastMessageDate(dto.getLastMessageDate());
-//        conversation.setPlatform(Platform.INSTAGRAM);
-//
-//
-//        MongoDbMessagesItem mongoDbMessagesItem = new MongoDbMessagesItem();
-//        List<MongoDbMessagesItem> messages = new ArrayList<>();
-//
-//        for (var message : dto.getMessages()) {
-//            mongoDbMessagesItem.setText(message.getText());
-//            mongoDbMessagesItem.setSentDate(message.getDate());
-//            mongoDbMessagesItem.setId(message.getId());
-//            mongoDbMessagesItem.setSentByClient(message.isClient());
-//            messages.add(mongoDbMessagesItem);
-//        }
-//
-//        MongoDbMessages mongoDbMessages = new MongoDbMessages();
-//        mongoDbMessages.setId(dto.getId());
-//        mongoDbMessages.setMessages(messages);
-//
-//
-//        conversationManager.createConversation(conversation, mongoDbMessagesItem);
-
-
-        return null;
-    }
-
 
     public static String sendMessageWithInstagram(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) throws IOException {
 
@@ -117,11 +77,17 @@ public class ExternalApiClients {
         instagram.setup();
         instagram.login();
 
-        ConversationManager conversationManager = new ConversationManager();
+        InstagramInboxResult inbox;;
+        AtomicReference<InstagramInboxThread> inboxThread = null;
+        String newConversationId = null;
+
+        try {
+            String messageText = mongoDbMessagesItem.getText();
+            String conversationId = conversation.getId().replace("IG_", "");
 
 
-        InstagramSearchUsernameResult result = instagram.sendRequest(new InstagramSearchUsernameRequest("anilberdogan"));
-        InstagramUser user = result.getUser();
+            InstagramDirectShareRequest.ShareType type = InstagramDirectShareRequest.ShareType.MESSAGE;
+            instagram.sendRequest(InstagramDirectShareRequest.builder().shareType(type).message(messageText).threadId(conversationId).build());
 
 //
 //        List<String> receipents = new ArrayList<String>();
@@ -132,15 +98,25 @@ public class ExternalApiClients {
 //        InstagramDirectShareRequest.ShareType type = InstagramDirectShareRequest.ShareType.MESSAGE;
 //
 //        instagram.sendRequest(InstagramDirectShareRequest.builder().shareType(type).message("31").recipients(receipents).build());
+            inbox = instagram.sendRequest(new InstagramGetInboxRequest());
+            for (InstagramInboxThread thread : inbox.getInbox().getThreads()) {
+                if (thread.getThread_id().equals(conversationId)) {
+                    inboxThread = new AtomicReference<>(thread);
+                    break;
+                }
+            }
 
-//        StatusResult hello = instagram.sendRequest(InstagramDirectShareRequest.builder(InstagramDirectShareRequest.ShareType.MESSAGE, receipents).message("Hello").build());
-//        try {
-//            instagram.sendRequest(InstagramDirectShareRequest.builder(InstagramDirectShareRequest.ShareType.MESSAGE,).message("Hello").build());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+            InstagramInboxThreadResult threadResult = instagram.sendRequest(new InstagramGetInboxThreadRequest(conversationId, inboxThread.get().getOldest_cursor()));
 
-        return null;
+            newConversationId = threadResult.getThread().getItems().get(0).getItem_id();
+
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+
+        return newConversationId;
 
     }
 
