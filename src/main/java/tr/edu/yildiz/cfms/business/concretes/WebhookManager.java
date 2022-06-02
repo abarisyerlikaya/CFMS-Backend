@@ -1,5 +1,6 @@
 package tr.edu.yildiz.cfms.business.concretes;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,6 +14,10 @@ import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDtoMessage;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDtoMessage;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.twitter.TwitterWebhookDto;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.twitter.TwitterWebhookDtoEvent;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.twitter.TwitterWebhookDtoMessageCreate;
+import tr.edu.yildiz.cfms.api.dtos.webhooks.twitter.TwitterWebhookDtoUser;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientMessage;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientMessages;
@@ -25,9 +30,13 @@ import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessages;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesAttachment;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.time.Instant.ofEpochMilli;
 import static java.util.TimeZone.getDefault;
@@ -65,7 +74,7 @@ public class WebhookManager implements WebhookService {
     }
 
     @Override
-    public void handleInstagramConversation(InstagramConversationDto dto, Boolean isNew){
+    public void handleInstagramConversation(InstagramConversationDto dto, Boolean isNew) {
 
         List<MongoDbMessagesItem> messages = new ArrayList<>();
 
@@ -81,6 +90,98 @@ public class WebhookManager implements WebhookService {
         if (isNew) createInstagramConversation(dto, messages);
         else updateInstagramConversation(dto, messages);
 
+    }
+
+    @Override
+    public Map<String, String> verifyTwitterWebhook(String crcToken) {
+        try {
+            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secret_key = new SecretKeySpec(CONSUMER_SECRET.getBytes("UTF-8"), "HmacSHA256");
+            sha256_HMAC.init(secret_key);
+            String hash = Base64.encodeBase64String(sha256_HMAC.doFinal(crcToken.getBytes("UTF-8")));
+            Map<String, String> map = new HashMap<>();
+            map.put("response_token", "sha256=" + hash);
+            return map;
+        } catch (Exception e) {
+            return new HashMap<>();
+        }
+    }
+
+    @Override
+    public void handleTwitterWebhook(TwitterWebhookDto dto) {
+        var events = dto.getEvents();
+        var users = dto.getUsers();
+
+        if (events == null || events.isEmpty() || users == null || users.isEmpty())
+            return;
+
+        for (var event : events)
+            processTwitterEvent(event, users);
+    }
+
+    private void processTwitterEvent(TwitterWebhookDtoEvent event, Map<String, TwitterWebhookDtoUser> users) {
+        String type = event.getType();
+        if (!type.equals("message_create"))
+            return;
+
+        var messageCreate = event.getMessageCreate();
+
+        String clientId = messageCreate.getSenderId();
+        if (clientId.equals(TWITTER_ACCOUNT_ID)) return;
+        String conversationId = "TW_" + clientId;
+        String mId = event.getId();
+        long timestamp = Long.parseLong(event.getCreatedTimestamp());
+        LocalDateTime lastMessageDate = LocalDateTime.ofInstant(ofEpochMilli(timestamp), getDefault().toZoneId());
+
+        boolean doesExist = conversationRepository.existsById(conversationId);
+
+        if (doesExist) {
+            saveTwitterMessage(conversationId, lastMessageDate, messageCreate, mId);
+        } else {
+            Platform platform = Platform.TWITTER;
+            String clientName = users.get(clientId).getName();
+            var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate);
+            createTwitterConversation(conversation, messageCreate, mId);
+        }
+    }
+
+    private void saveTwitterMessage(String conversationId, LocalDateTime lastMessageDate, TwitterWebhookDtoMessageCreate messageCreate, String mId) {
+        boolean sentByClient = true;
+        String text = null;
+        List<MongoDbMessagesAttachment> attachments = null;
+
+        if (messageCreate.isTextMessage()) text = messageCreate.getMessageData().getText();
+        if (messageCreate.hasAttachment()) {
+            attachments = new ArrayList<>();
+            var messageAttachment = messageCreate.getAttachment();
+            String type = messageAttachment.getMedia().getType();
+            String url = messageAttachment.getMedia().getUrl();
+            attachments.add(new MongoDbMessagesAttachment(type, url));
+        }
+
+        var message = new MongoDbMessagesItem(mId, lastMessageDate, sentByClient, text, attachments);
+        var webSocketClientMessage = new WebSocketClientMessage(conversationId, message);
+        chatController.sendMessage(webSocketClientMessage);
+    }
+
+    private void createTwitterConversation(Conversation conversation, TwitterWebhookDtoMessageCreate messageCreate, String mId) {
+        boolean sentByClient = true;
+        String text = null;
+        List<MongoDbMessagesAttachment> attachments = null;
+
+        if (messageCreate.isTextMessage()) text = messageCreate.getMessageData().getText();
+        if (messageCreate.hasAttachment()) {
+            attachments = new ArrayList<>();
+            var messageAttachment = messageCreate.getAttachment();
+            String type = messageAttachment.getMedia().getType();
+            String url = messageAttachment.getMedia().getUrl();
+            attachments.add(new MongoDbMessagesAttachment(type, url));
+        }
+
+        LocalDateTime sentDate = conversation.getLastMessageDate();
+        var message = new MongoDbMessagesItem(mId, sentDate, sentByClient, text, attachments);
+        var webSocketClientConversation = new WebSocketClientConversation(conversation, message);
+        chatController.createConversation(webSocketClientConversation);
     }
 
     private void createInstagramConversation(InstagramConversationDto dto, List<MongoDbMessagesItem> messages) {

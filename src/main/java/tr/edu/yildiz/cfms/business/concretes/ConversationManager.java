@@ -160,6 +160,7 @@ public class ConversationManager implements ConversationService {
                 messageId = ExternalApiClients.sendMessageWithTelegram(conversation, mongoDbMessagesItem);
                 break;
             case TWITTER:
+                messageId = ExternalApiClients.sendMessageWithTwitter(conversation, mongoDbMessagesItem);
                 break;
             default:
                 return null;

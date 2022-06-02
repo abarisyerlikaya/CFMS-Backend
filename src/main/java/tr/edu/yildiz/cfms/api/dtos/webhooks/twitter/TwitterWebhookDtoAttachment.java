@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class TwitterWebhookDtoAttachment {
-    @Getter
     @Setter
     private String type;
 
@@ -13,4 +12,12 @@ public class TwitterWebhookDtoAttachment {
     @Setter
     @JsonProperty("media")
     private TwitterWebhookDtoMedia media;
+
+    public String getType() {
+        if (type != "media")
+            return null;
+        if (media.getVideoInfo() != null)
+            return "video";
+        return "image";
+    }
 }

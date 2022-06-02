@@ -1,27 +1,21 @@
 package tr.edu.yildiz.cfms.api.controllers;
 
-import org.apache.commons.codec.binary.Hex;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.facebook.FacebookWebhookDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDto;
-import tr.edu.yildiz.cfms.api.dtos.webhooks.telegram.TelegramWebhookDtoFrom;
 import tr.edu.yildiz.cfms.api.dtos.webhooks.twitter.TwitterWebhookDto;
 import tr.edu.yildiz.cfms.business.abstracts.WebhookService;
 import tr.edu.yildiz.cfms.core.response_types.Response;
-import tr.edu.yildiz.cfms.core.response_types.SuccessDataResponse;
 import tr.edu.yildiz.cfms.core.response_types.SuccessResponse;
-import tr.edu.yildiz.cfms.core.utils.ExternalApiClients;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-import static tr.edu.yildiz.cfms.core.utils.Constants.TELEGRAM_TOKEN;
 
 
 @RestController
@@ -69,30 +63,13 @@ public class WebhooksController {
     }
 
     @GetMapping("/twitter")
-    public Map handleTwitterWebhookGet(@RequestParam(name = "crc_token") String crcToken) throws Exception {
-        try {
-            String CONSUMER_SECRET = "jLy2vTyXS1UEUZ1QsDMDdxpa4GLiKT0MAISmqrBDeOSxm4tvjt";
-
-            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secret_key = new SecretKeySpec(CONSUMER_SECRET.getBytes("UTF-8"), "HmacSHA256");
-            sha256_HMAC.init(secret_key);
-
-            String hash = Base64.encodeBase64String(sha256_HMAC.doFinal(crcToken.getBytes("UTF-8")));
-
-            Map<String, String> map = new HashMap<>();
-            map.put("response_token", "sha256=" + hash);
-
-            return map;
-        }
-        catch (Exception e){
-            System.out.println("Error");
-            return new HashMap<String, String>();
-        }
+    public Map verifyTwitterWebhook(@RequestParam(name = "crc_token") String crcToken) throws Exception {
+        return verifyTwitterWebhook(crcToken);
     }
 
     @PostMapping("/twitter")
-    public Response handleTwitterWebhookPost(@RequestBody TwitterWebhookDto dto) {
-        System.out.println("Webhook2!!!!");
-        return new SuccessResponse("");
+    public Response handleTwitterWebhook(@RequestBody TwitterWebhookDto dto) {
+        webhookService.handleTwitterWebhook(dto);
+        return new SuccessResponse();
     }
 }

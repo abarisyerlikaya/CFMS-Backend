@@ -70,7 +70,7 @@ public class ExternalApiClients {
                 .bodyToMono(TelegramSendMessageResponseDto.class);
 
         TelegramSendMessageResponseDto dto = mono.block();
-        var result =  dto.getResult();
+        var result = dto.getResult();
         if (!dto.isOk() || result == null)
             return null;
 
@@ -107,8 +107,6 @@ public class ExternalApiClients {
 //        conversationManager.createConversation(conversation, mongoDbMessagesItem);
 
 
-
-
         return null;
     }
 
@@ -120,7 +118,6 @@ public class ExternalApiClients {
         instagram.login();
 
         ConversationManager conversationManager = new ConversationManager();
-
 
 
         InstagramSearchUsernameResult result = instagram.sendRequest(new InstagramSearchUsernameRequest("anilberdogan"));
@@ -143,8 +140,28 @@ public class ExternalApiClients {
 //            e.printStackTrace();
 //        }
 
-            return null;
+        return null;
 
+    }
+
+    public static String sendMessageWithTwitter(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) {
+        int splitIndex = "TW_".length();
+        String recipientId = conversation.getId().substring(splitIndex);
+        String text = mongoDbMessagesItem.getText();
+        var requestBody = new TwitterSendMessageRequestBody(recipientId, text);
+        WebClient client = WebClient.create(TWITTER_MESSAGE_URL);
+        Mono<TwitterSendMessageResponseDto> mono = client
+                .post()
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .header("Authorization", TWITTER_AUTH_HEADER)
+                .retrieve()
+                .bodyToMono(TwitterSendMessageResponseDto.class);
+        var responseDto = mono.block();
+        String mId = responseDto.getMessageId();
+        if (mId == null || mId.isEmpty())
+            return null;
+        return mId;
     }
 
     private static class FacebookSendMessageRequestBody {
@@ -225,5 +242,84 @@ public class ExternalApiClients {
         }
     }
 
+    private static class TwitterSendMessageRequestBody {
+        @Getter
+        @Setter
+        @JsonProperty("event")
+        private _Event event;
 
+        public TwitterSendMessageRequestBody(String recipientId, String text) {
+            this.event = new _Event(recipientId, text);
+        }
+
+        class _Event {
+            @Getter
+            @Setter
+            private String type = "message_create";
+
+            @Getter
+            @Setter
+            @JsonProperty("message_create")
+            private _MessageCreate messageCreate;
+
+            public _Event(String recipientId, String text) {
+                this.messageCreate = new _MessageCreate(recipientId, text);
+            }
+
+            class _MessageCreate {
+                @Getter
+                @Setter
+                @JsonProperty("target")
+                private _Target target;
+
+                @Getter
+                @Setter
+                @JsonProperty("message_data")
+                private _MessageData messageData;
+
+                public _MessageCreate(String recipientId, String text) {
+                    this.target = new _Target(recipientId);
+                    this.messageData = new _MessageData(text);
+                }
+
+                @AllArgsConstructor
+                class _Target {
+                    @Getter
+                    @Setter
+                    @JsonProperty("recipient_id")
+                    private String recipientId;
+                }
+
+                @AllArgsConstructor
+                class _MessageData {
+                    @Getter
+                    @Setter
+                    private String text;
+                }
+            }
+        }
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    private static class TwitterSendMessageResponseDto {
+        @Getter
+        @Setter
+        @JsonProperty("event")
+        private _Event event;
+
+        @NoArgsConstructor
+        @AllArgsConstructor
+        class _Event {
+            @Getter
+            @Setter
+            private String id;
+        }
+
+        public String getMessageId() {
+            if (event == null)
+                return null;
+            return event.getId();
+        }
+    }
 }
