@@ -58,7 +58,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 path.startsWith("/chat") ||
                 path.startsWith("/send-message") ||
                 path.startsWith("/create-conversation") ||
-                path.startsWith("/topic");
+                path.startsWith("/topic") ||
+                path.startsWith("/api/cloud-balancing");
         return result;
     }
 }
