@@ -37,4 +37,14 @@ public class Conversation {
     @Column(name="last_message_date")
     private LocalDateTime lastMessageDate;
 
+    @Getter
+    @Setter
+    @Column(name="is_active")
+    private boolean isActive;
+
+    @Getter
+    @Setter
+    @Column(name="assigned_to")
+    private String assignedTo;
+
 }

@@ -36,4 +36,14 @@ public class User {
     @Setter
     @Column(name="password")
     private String password;
+
+    @Getter
+    @Setter
+    @Column(name="total_message_length")
+    private long totalMessageLength;
+
+    @Getter
+    @Setter
+    @Column(name="conversation_count")
+    private int conversationCount;
 }
