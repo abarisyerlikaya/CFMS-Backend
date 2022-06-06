@@ -43,6 +43,7 @@ import java.util.Map;
 import static java.time.Instant.ofEpochMilli;
 import static java.util.TimeZone.getDefault;
 import static tr.edu.yildiz.cfms.core.utils.Constants.*;
+import static tr.edu.yildiz.cfms.core.utils.Utils.truncate;
 
 @Service
 public class WebhookManager implements WebhookService {
@@ -144,7 +145,8 @@ public class WebhookManager implements WebhookService {
         } else {
             Platform platform = Platform.TWITTER;
             String clientName = users.get(clientId).getName();
-            var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate);
+            String lastMessagePreview = messageCreate.isTextMessage() ? messageCreate.getMessageData().getText() : "";
+            var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate, truncate(lastMessagePreview));
             createTwitterConversation(conversation, messageCreate, mId);
         }
     }
@@ -194,6 +196,7 @@ public class WebhookManager implements WebhookService {
         conversation.setClientName(dto.getClientName());
         conversation.setLastMessageDate(LocalDateTime.parse(dto.getLastMessageDate()));
         conversation.setPlatform(Platform.INSTAGRAM);
+        conversation.setLastMessagePreview(truncate(dto.getLastMessageText()));
 
         WebSocketClientConversation webSocketClientConversation = new WebSocketClientConversation();
         webSocketClientConversation.setConversation(conversation);
@@ -237,7 +240,8 @@ public class WebhookManager implements WebhookService {
         } else {
             Platform platform = Platform.FACEBOOK;
             String clientName = getUserByIdFromFacebook(clientId);
-            var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate);
+            String lastMessagePreview = message.isTextMessage() ? message.getText() : "";
+            var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate, truncate(lastMessagePreview));
             createFacebookConversation(conversation, message);
         }
 
@@ -315,7 +319,8 @@ public class WebhookManager implements WebhookService {
             saveTelegramMessage(conversationId, lastMessageDate, message);
         } else {
             Platform platform = Platform.TELEGRAM;
-            var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate);
+            String lastMessagePreview = message.isTextMessage() ? message.getText() : "";
+            var conversation = new Conversation(conversationId, platform, clientName, lastMessageDate, truncate(lastMessagePreview));
             createTelegramConversation(conversation, message);
         }
     }

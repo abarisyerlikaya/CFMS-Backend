@@ -1,13 +1,12 @@
 package tr.edu.yildiz.cfms.business.concretes;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
-import tr.edu.yildiz.cfms.api.dtos.webhooks.instagram.InstagramConversationDto;
 import tr.edu.yildiz.cfms.api.models.ConversationDetail;
 import tr.edu.yildiz.cfms.api.models.GetConversationDetailRequest;
 import tr.edu.yildiz.cfms.api.models.GetConversationsRequest;
 import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
+import tr.edu.yildiz.cfms.business.abstracts.OptimizationService;
 import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
 import tr.edu.yildiz.cfms.business.repository.MessageRepository;
 import tr.edu.yildiz.cfms.core.enums.Platform;
@@ -16,11 +15,11 @@ import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessages;
 import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static tr.edu.yildiz.cfms.core.utils.Utils.truncate;
 
 @Service
 public class ConversationManager implements ConversationService {
@@ -31,8 +30,7 @@ public class ConversationManager implements ConversationService {
     private MessageRepository messageRepository;
 
     @Autowired
-    private SessionRegistry sessionRegistry;
-
+    private OptimizationService optimizationService;
 
     @Override
     public List<Conversation> getList(GetConversationsRequest request) {
@@ -41,8 +39,6 @@ public class ConversationManager implements ConversationService {
 
     @Override
     public List<ConversationDetail> getListWithMessages(GetConversationsRequest request) {
-        var principles = sessionRegistry.getAllPrincipals();
-
         var conversations = conversationRepository.findAll();
         var results = new ArrayList<ConversationDetail>();
 
@@ -104,6 +100,8 @@ public class ConversationManager implements ConversationService {
                 mongoDbMessagesItem.setId(messageId);
             }
             conversation.setLastMessageDate(mongoDbMessagesItem.getSentDate());
+            conversation.setLastMessagePreview(truncate(mongoDbMessagesItem.getText()));
+
             conversationRepository.save(conversation);
             messageRepository.pushMessage(conversationId, mongoDbMessagesItem);
         } catch (Exception e) {
@@ -121,7 +119,7 @@ public class ConversationManager implements ConversationService {
         var conversation = optional.get();
 
         try {
-            conversation.setLastMessageDate(mongoDbMessagesItems.get(mongoDbMessagesItems.size()-1).getSentDate());
+            conversation.setLastMessageDate(mongoDbMessagesItems.get(mongoDbMessagesItems.size() - 1).getSentDate());
             for (var mongoDbMessagesItem : mongoDbMessagesItems) {
                 messageRepository.pushMessage(conversationId, mongoDbMessagesItem);
             }
@@ -139,6 +137,7 @@ public class ConversationManager implements ConversationService {
 
         conversationRepository.save(conversation);
         messageRepository.save(mongoDbMessages);
+        optimizationService.assignConversation(conversation);
     }
 
     private String sendMessageWithExternalApi(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) throws Exception {
@@ -166,4 +165,6 @@ public class ConversationManager implements ConversationService {
 
         return messageId;
     }
+
+
 }
