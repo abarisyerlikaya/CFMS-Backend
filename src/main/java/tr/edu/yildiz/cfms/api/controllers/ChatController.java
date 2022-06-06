@@ -21,8 +21,6 @@ import tr.edu.yildiz.cfms.entities.concretes.mongodb.MongoDbMessagesItem;
 @Controller
 @CrossOrigin(origins = "*")
 public class ChatController {
-
-
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
@@ -78,11 +76,7 @@ public class ChatController {
 
         try {
             conversationService.createConversation(conversation, message);
-
-
             var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_CONVERSATION, conversation);
-
-
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         } catch (Exception e) {
             var error = new WebSocketError("CREATE_CONVERSATION_ERROR", "Cannot create conversation!");
