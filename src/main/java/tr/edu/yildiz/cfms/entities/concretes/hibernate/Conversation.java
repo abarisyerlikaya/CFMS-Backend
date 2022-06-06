@@ -39,12 +39,24 @@ public class Conversation {
 
     @Getter
     @Setter
+    @Column(name="last_message_preview")
+    private String lastMessagePreview;
+
+    @Getter
+    @Setter
     @Column(name="is_active")
-    private boolean isActive;
+    private boolean isActive = true;
 
     @Getter
     @Setter
     @Column(name="assigned_to")
-    private String assignedTo;
+    private String assignedTo = null;
 
+    public Conversation(String id, Platform platform, String clientName, LocalDateTime lastMessageDate, String lastMessagePreview) {
+        this.id = id;
+        this.platform = platform;
+        this.clientName = clientName;
+        this.lastMessageDate = lastMessageDate;
+        this.lastMessagePreview = lastMessagePreview;
+    }
 }

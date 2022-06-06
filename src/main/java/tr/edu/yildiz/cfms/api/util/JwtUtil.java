@@ -35,13 +35,16 @@ public class JwtUtil {
     }
 
     private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        var expiration = extractExpiration(token);
+        return expiration != null && expiration.before(new Date());
     }
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("first_name", user.getFirstName());
-        claims.put("last_name", user.getLastName());
+        String firstName = user.getFirstName();
+        String lastName = user.getLastName();
+        if (firstName != null && !firstName.isEmpty()) claims.put("first_name", firstName);
+        if (lastName != null && !lastName.isEmpty()) claims.put("last_name", lastName);
         return createToken(claims, user.getUsername());
     }
 
