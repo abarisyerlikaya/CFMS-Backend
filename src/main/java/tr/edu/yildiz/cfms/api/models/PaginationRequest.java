@@ -14,5 +14,5 @@ public class PaginationRequest {
 
     @Getter
     @Setter
-    int limit = 10;
+    int limit = 500;
 }
