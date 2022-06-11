@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static tr.edu.yildiz.cfms.core.utils.Constants.ADMIN_JWT;
+import static tr.edu.yildiz.cfms.core.utils.Constants.*;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -34,9 +34,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
-
-    private static final String BEARER = "Bearer ";
-    private static final int BEARER_LENGTH = BEARER.length();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -60,7 +57,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (!jwtUtil.validateToken(jwt, user))
             return;
 
-        var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, null, userDetails.getAuthorities());
+        var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         var details = new WebAuthenticationDetailsSource().buildDetails(request);
         usernamePasswordAuthenticationToken.setDetails(details);
         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);

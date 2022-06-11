@@ -17,4 +17,10 @@ public class AuthController {
     public Response login(@RequestBody LoginRequest request) {
         return authService.login(request);
     }
+
+    @GetMapping("/logout")
+    @CrossOrigin
+    public Response login(@RequestHeader("Authorization") String token) {
+        return authService.logout(token);
+    }
 }
