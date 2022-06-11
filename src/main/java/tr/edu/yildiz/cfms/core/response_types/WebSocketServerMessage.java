@@ -20,8 +20,16 @@ public class WebSocketServerMessage<T> {
     @Setter
     private boolean success = true;
 
-    public WebSocketServerMessage(WebSocketEvent event, T payload) {
+    @Getter
+    @Setter
+    private String conversationId;
+
+    public WebSocketServerMessage(WebSocketEvent event, T payload, String conversationId) {
         this.event = event;
         this.payload = payload;
+        this.conversationId = conversationId;
+
+
     }
+
 }

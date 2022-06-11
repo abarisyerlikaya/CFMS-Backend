@@ -8,6 +8,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import tr.edu.yildiz.cfms.api.models.ConversationDetail;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientMessage;
 import tr.edu.yildiz.cfms.api.models.WebSocketClientMessages;
@@ -39,11 +40,11 @@ public class ChatController {
 
         try {
             conversationService.sendMessage(conversationId, message);
-            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.SENT_MESSAGE, message);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.SENT_MESSAGE, message, conversationId);
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         } catch (Exception e) {
             var error = new WebSocketError("SEND_MESSAGE_ERROR", "Cannot send message!");
-            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.ERROR, error, false);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.ERROR, error, false, conversationId);
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         }
     }
@@ -56,11 +57,11 @@ public class ChatController {
 
         try {
             conversationService.sendMessages(conversationId, messages);
-            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.SENT_MESSAGES, messages);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.SENT_MESSAGES, messages, conversationId);
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         } catch (Exception e) {
             var error = new WebSocketError("SEND_MESSAGES_ERROR", "Cannot send messages!");
-            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.ERROR, error, false);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.ERROR, error, false, conversationId);
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         }
 
@@ -73,14 +74,15 @@ public class ChatController {
         sessionRegistry.getAllPrincipals();
         Conversation conversation = webSocketClientConversation.getConversation();
         MongoDbMessagesItem message = webSocketClientConversation.getMessage();
+        ConversationDetail conversationDetail = new ConversationDetail(conversation, null);
 
         try {
             conversationService.createConversation(conversation, message);
-            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_CONVERSATION, conversation);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_CONVERSATION, conversationDetail, conversation.getId());
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         } catch (Exception e) {
             var error = new WebSocketError("CREATE_CONVERSATION_ERROR", "Cannot create conversation!");
-            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_CONVERSATION, error, false);
+            var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_CONVERSATION, error, false, conversation.getId());
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         }
     }

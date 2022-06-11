@@ -24,6 +24,17 @@ import static tr.edu.yildiz.cfms.core.utils.Constants.*;
 import static tr.edu.yildiz.cfms.core.utils.Constants.TELEGRAM_TOKEN;
 
 public class ExternalApiClients {
+
+    static Instagram4j instagram;
+
+    static {
+        try {
+            instagram = getInstagramClient();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static String sendMessageWithFacebook(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) {
         String url = FB_BASE_URL + "/v13.0/me/messages?access_token=" + FB_PAGE_ACCESS_TOKEN;
         String conversationId = conversation.getId();
@@ -73,10 +84,6 @@ public class ExternalApiClients {
 
     public static String sendMessageWithInstagram(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) throws IOException {
 
-        Instagram4j instagram = Instagram4j.builder().username("bitirmeytu").password("Bitirme123").build();
-        instagram.setup();
-        instagram.login();
-
         InstagramInboxResult inbox;;
         AtomicReference<InstagramInboxThread> inboxThread = null;
         String newConversationId = null;
@@ -108,6 +115,15 @@ public class ExternalApiClients {
 
 
         return newConversationId;
+    }
+
+    private static Instagram4j getInstagramClient() throws IOException {
+
+        Instagram4j instagram = Instagram4j.builder().username("bitirmeytu").password("Bitirme123").build();
+        instagram.setup();
+        instagram.login();
+
+        return instagram;
     }
 
     public static String sendMessageWithTwitter(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) {

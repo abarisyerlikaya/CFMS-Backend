@@ -119,10 +119,11 @@ public class ConversationManager implements ConversationService {
         var conversation = optional.get();
 
         try {
-            conversation.setLastMessageDate(mongoDbMessagesItems.get(mongoDbMessagesItems.size() - 1).getSentDate());
             for (var mongoDbMessagesItem : mongoDbMessagesItems) {
                 messageRepository.pushMessage(conversationId, mongoDbMessagesItem);
             }
+            conversation.setLastMessageDate(mongoDbMessagesItems.get(mongoDbMessagesItems.size() - 1).getSentDate());
+            conversation.setLastMessagePreview(mongoDbMessagesItems.get(mongoDbMessagesItems.size() - 1).getText());
             conversationRepository.save(conversation);
         } catch (Exception e) {
             e.printStackTrace(); // TODO Handle error
