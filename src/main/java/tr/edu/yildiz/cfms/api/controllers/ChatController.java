@@ -8,10 +8,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import tr.edu.yildiz.cfms.api.models.ConversationDetail;
-import tr.edu.yildiz.cfms.api.models.WebSocketClientConversation;
-import tr.edu.yildiz.cfms.api.models.WebSocketClientMessage;
-import tr.edu.yildiz.cfms.api.models.WebSocketClientMessages;
+import tr.edu.yildiz.cfms.api.models.*;
 import tr.edu.yildiz.cfms.core.response_types.WebSocketError;
 import tr.edu.yildiz.cfms.core.response_types.WebSocketServerMessage;
 import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
@@ -85,5 +82,18 @@ public class ChatController {
             var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_CONVERSATION, error, false, conversation.getId());
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         }
+    }
+
+    @MessageMapping("/end-conversation")
+    @SendTo("/topic")
+    public void endConversation(@Payload WebSocketConversation webSocketConversation){
+        String conversationId = webSocketConversation.getConversationId();
+
+        try {
+            conversationService.endConversation(conversationId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 }

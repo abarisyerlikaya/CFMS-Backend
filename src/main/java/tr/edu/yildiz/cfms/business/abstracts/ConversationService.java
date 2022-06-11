@@ -20,4 +20,6 @@ public interface ConversationService {
     void sendMessages(String conversationId, List<MongoDbMessagesItem> mongoDbMessagesItem) throws Exception;
 
     void createConversation(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem);
+
+    void endConversation(String conversationId) throws Exception;
 }

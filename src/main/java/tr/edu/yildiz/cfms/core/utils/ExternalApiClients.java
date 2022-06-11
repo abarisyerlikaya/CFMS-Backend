@@ -104,9 +104,7 @@ public class ExternalApiClients {
                 }
             }
 
-            InstagramInboxThreadResult threadResult = instagram.sendRequest(new InstagramGetInboxThreadRequest(conversationId, inboxThread.get().getOldest_cursor()));
-
-            newConversationId = threadResult.getThread().getItems().get(0).getItem_id();
+            newConversationId = inboxThread.get().getOldest_cursor();
 
         }
         catch (Exception e) {

@@ -176,6 +176,19 @@ public class ConversationManager implements ConversationService {
         optimizationService.assignConversation(conversation);
     }
 
+    @Override
+    public void endConversation(String conversationId) throws Exception{
+        var optional = conversationRepository.findById(conversationId);
+
+        if (optional.isEmpty())
+            throw new Exception("Conversation not found!");
+
+        var conversation = optional.get();
+
+        conversation.setActive(false);
+        conversationRepository.save(conversation);
+    }
+
     private String sendMessageWithExternalApi(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) throws Exception {
         Platform platform = conversation.getPlatform();
         String messageId = null;
