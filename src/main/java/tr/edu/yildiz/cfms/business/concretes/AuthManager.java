@@ -18,6 +18,8 @@ import tr.edu.yildiz.cfms.business.abstracts.UserService;
 import tr.edu.yildiz.cfms.core.response_types.Response;
 import tr.edu.yildiz.cfms.core.response_types.SuccessDataResponse;
 import tr.edu.yildiz.cfms.core.response_types.SuccessResponse;
+import tr.edu.yildiz.cfms.entities.concretes.hibernate.User;
+
 import static tr.edu.yildiz.cfms.core.utils.Constants.BEARER;
 import static tr.edu.yildiz.cfms.core.utils.Constants.BEARER_LENGTH;
 
@@ -67,11 +69,23 @@ public class AuthManager implements AuthService {
                             information.expireNow();
                             sessionRegistry.removeSessionInformation(information.getSessionId());
                         }
-
-
                 }
             }
             return new SuccessResponse("Successfully logged out!");
+        } catch (Exception e) {
+            return new Response(false, HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred!");
+        }
+    }
+
+    @Override
+    public Response getUser(String token) {
+        try {
+            if (token.startsWith(BEARER)) token = token.substring(BEARER_LENGTH);
+            String username = jwtUtil.extractUsername(token);
+            var user = userService.getByUsername(username);
+            return new SuccessDataResponse<>(user);
+        } catch (UsernameNotFoundException e) {
+            return new Response(false, HttpStatus.NOT_FOUND, "User not found!");
         } catch (Exception e) {
             return new Response(false, HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred!");
         }
