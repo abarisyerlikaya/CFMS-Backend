@@ -11,4 +11,6 @@ public class Constants {
     public static final String TWITTER_ACCOUNT_ID = "1250827210669375491";
     public static final String TWITTER_AUTH_HEADER = "OAuth oauth_consumer_key=\"IpG3iHNtmfrH2CGF0Ox0Z2yuY\",oauth_token=\"1250827210669375491-9TVHcjWva789N16a8PyFm4pD87uOIP\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\"1654107141\",oauth_nonce=\"Vo9lRvcce73\",oauth_version=\"1.0\",oauth_signature=\"Y1oJ53wuZDxQ4eJnLcEFmkQ7Aeg%3D\"";
     public static final String ADMIN_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTY1NDUwMTA3OH0.6m71ak023CWzvWn5W_s1h37J-9LG92R3HPOHRUQTeG4";
+    public static final String BEARER = "Bearer ";
+    public static final int BEARER_LENGTH = BEARER.length();
 }

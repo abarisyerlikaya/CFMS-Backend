@@ -2,6 +2,7 @@ package tr.edu.yildiz.cfms.api.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.web.bind.annotation.*;
 import tr.edu.yildiz.cfms.api.models.ConversationDetail;
 import tr.edu.yildiz.cfms.api.models.GetConversationsRequest;
@@ -19,6 +20,10 @@ public class ConversationsController {
     @Autowired
     private ConversationService conversationService;
 
+
+    @Autowired
+    private SessionRegistry sessionRegistry;
+
     @Autowired
     public ConversationsController(ConversationService conversationService) {
         super();
@@ -27,6 +32,7 @@ public class ConversationsController {
 
     @GetMapping("")
     public Response getList(GetConversationsRequest request) {
+        var principals = sessionRegistry.getAllPrincipals();
         var conversations = conversationService.getListWithMessages(request);
         return new SuccessDataResponse<>(conversations);
     }
