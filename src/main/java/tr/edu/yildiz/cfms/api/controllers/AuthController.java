@@ -23,4 +23,10 @@ public class AuthController {
     public Response login(@RequestHeader("Authorization") String token) {
         return authService.logout(token);
     }
+
+    @PostMapping("/user")
+    @CrossOrigin
+    public Response getUser(@RequestHeader("Authorization") String token) {
+        return authService.getUser(token);
+    }
 }
