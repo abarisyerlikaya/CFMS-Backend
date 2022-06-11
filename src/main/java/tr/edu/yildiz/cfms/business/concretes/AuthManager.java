@@ -65,7 +65,7 @@ public class AuthManager implements AuthService {
                 if (principal instanceof UserDetails) {
                     var userDetails = (UserDetails) principal;
                     if (userDetails.getUsername().equals(username))
-                        for (SessionInformation information : sessionRegistry.getAllSessions(userDetails, false)) {
+                        for (SessionInformation information : sessionRegistry.getAllSessions(userDetails, true)) {
                             information.expireNow();
                             sessionRegistry.removeSessionInformation(information.getSessionId());
                         }
