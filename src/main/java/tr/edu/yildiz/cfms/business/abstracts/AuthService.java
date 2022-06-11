@@ -7,4 +7,8 @@ import tr.edu.yildiz.cfms.core.response_types.Response;
 @Service
 public interface AuthService {
     Response login(LoginRequest request);
+
+    Response logout(String token);
+
+    Response getUser(String token);
 }

@@ -9,6 +9,7 @@ import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
 import tr.edu.yildiz.cfms.business.abstracts.OptimizationService;
 import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
 import tr.edu.yildiz.cfms.business.repository.MessageRepository;
+import tr.edu.yildiz.cfms.business.repository.UserRepository;
 import tr.edu.yildiz.cfms.core.enums.Platform;
 import tr.edu.yildiz.cfms.core.utils.ExternalApiClients;
 import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
@@ -28,6 +29,9 @@ public class ConversationManager implements ConversationService {
 
     @Autowired
     private MessageRepository messageRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private OptimizationService optimizationService;
@@ -102,6 +106,13 @@ public class ConversationManager implements ConversationService {
             conversation.setLastMessageDate(mongoDbMessagesItem.getSentDate());
             conversation.setLastMessagePreview(truncate(mongoDbMessagesItem.getText()));
 
+            String userId = conversation.getAssignedTo();
+            var optionalUser = userRepository.findById(userId);
+            if (optionalUser.isEmpty()) throw new Exception("User not found!");
+            var user = optionalUser.get();
+            user.setTotalMessageLength(user.getTotalMessageLength() + 1);
+
+            userRepository.save(user);
             conversationRepository.save(conversation);
             messageRepository.pushMessage(conversationId, mongoDbMessagesItem);
         } catch (Exception e) {
@@ -136,6 +147,13 @@ public class ConversationManager implements ConversationService {
         messages.add(mongoDbMessagesItem);
         var mongoDbMessages = new MongoDbMessages(id, messages);
 
+        String userId = conversation.getAssignedTo();
+        var optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) return;
+        var user = optionalUser.get();
+        user.setConversationCount(user.getConversationCount());
+
+        userRepository.save(user);
         conversationRepository.save(conversation);
         messageRepository.save(mongoDbMessages);
         optimizationService.assignConversation(conversation);
@@ -163,6 +181,14 @@ public class ConversationManager implements ConversationService {
 
         if (messageId == null || messageId.length() <= 0)
             throw new Exception("Could not send message with " + platform.name() + " API!");
+
+        String userId = conversation.getAssignedTo();
+        var optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) throw new Exception("User not found!");
+        var user = optionalUser.get();
+        user.setTotalMessageLength(user.getTotalMessageLength() + 1);
+
+        userRepository.save(user);
 
         return messageId;
     }
