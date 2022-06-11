@@ -135,6 +135,14 @@ public class ConversationManager implements ConversationService {
             }
             conversation.setLastMessageDate(mongoDbMessagesItems.get(mongoDbMessagesItems.size() - 1).getSentDate());
             conversation.setLastMessagePreview(mongoDbMessagesItems.get(mongoDbMessagesItems.size() - 1).getText());
+
+            String userId = conversation.getAssignedTo();
+            var optionalUser = userRepository.findById(userId);
+            if (optionalUser.isEmpty()) throw new Exception("User not found!");
+            var user = optionalUser.get();
+            user.setTotalMessageLength(user.getTotalMessageLength() + mongoDbMessagesItems.size());
+
+            userRepository.save(user);
             conversationRepository.save(conversation);
         } catch (Exception e) {
             e.printStackTrace(); // TODO Handle error
