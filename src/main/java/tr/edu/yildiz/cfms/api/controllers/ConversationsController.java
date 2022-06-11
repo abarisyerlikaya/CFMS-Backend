@@ -31,9 +31,9 @@ public class ConversationsController {
     }
 
     @GetMapping("")
-    public Response getList(GetConversationsRequest request) {
+    public Response getList(GetConversationsRequest request, @RequestHeader("Authorization") String accessToken) {
         var principals = sessionRegistry.getAllPrincipals();
-        var conversations = conversationService.getListWithMessages(request);
+        var conversations = conversationService.getListWithMessages(request, accessToken);
         return new SuccessDataResponse<>(conversations);
     }
 

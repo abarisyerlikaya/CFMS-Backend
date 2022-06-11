@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import tr.edu.yildiz.cfms.api.models.ConversationDetail;
 import tr.edu.yildiz.cfms.api.models.GetConversationDetailRequest;
 import tr.edu.yildiz.cfms.api.models.GetConversationsRequest;
+import tr.edu.yildiz.cfms.api.util.JwtUtil;
 import tr.edu.yildiz.cfms.business.abstracts.ConversationService;
 import tr.edu.yildiz.cfms.business.abstracts.OptimizationService;
 import tr.edu.yildiz.cfms.business.repository.ConversationRepository;
@@ -20,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static tr.edu.yildiz.cfms.core.utils.Constants.BEARER;
+import static tr.edu.yildiz.cfms.core.utils.Constants.BEARER_LENGTH;
 import static tr.edu.yildiz.cfms.core.utils.Utils.truncate;
 
 @Service
@@ -36,14 +39,20 @@ public class ConversationManager implements ConversationService {
     @Autowired
     private OptimizationService optimizationService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Override
     public List<Conversation> getList(GetConversationsRequest request) {
         return conversationRepository.findAll();
     }
 
     @Override
-    public List<ConversationDetail> getListWithMessages(GetConversationsRequest request) {
-        var conversations = conversationRepository.findAll();
+    public List<ConversationDetail> getListWithMessages(GetConversationsRequest request, String accessToken) {
+        if (accessToken.startsWith(BEARER)) accessToken = accessToken.substring(BEARER_LENGTH);
+        String username = jwtUtil.extractUsername(accessToken);
+
+        var conversations = conversationRepository.findByUsername(username);
         var results = new ArrayList<ConversationDetail>();
 
         boolean withMessages = request.isWithMessages();
