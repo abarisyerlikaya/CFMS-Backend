@@ -36,6 +36,10 @@ public class ConversationDetail {
 
     @Getter
     @Setter
+    private String assignedTo;
+
+    @Getter
+    @Setter
     private List<MongoDbMessagesItem> messages;
 
     public ConversationDetail(Conversation conversation, List<MongoDbMessagesItem> messages) {
@@ -44,6 +48,7 @@ public class ConversationDetail {
         this.clientName = conversation.getClientName();
         this.lastMessageDate = conversation.getLastMessageDate();
         this.lastMessagePreview = conversation.getLastMessagePreview();
+        this.assignedTo = conversation.getAssignedTo();
         this.messages = messages;
     }
 }

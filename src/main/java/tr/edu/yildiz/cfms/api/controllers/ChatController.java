@@ -61,20 +61,19 @@ public class ChatController {
             var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.ERROR, error, false, conversationId);
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         }
-
     }
 
     // Musteriden ilk mesaj geldiginde webhook burayi cagiracak
     @MessageMapping("/create-conversation")
     @SendTo("/topic")
     public void createConversation(@Payload WebSocketClientConversation webSocketClientConversation) {
-        sessionRegistry.getAllPrincipals();
         Conversation conversation = webSocketClientConversation.getConversation();
         MongoDbMessagesItem message = webSocketClientConversation.getMessage();
-        ConversationDetail conversationDetail = new ConversationDetail(conversation, null);
 
         try {
-            conversationService.createConversation(conversation, message);
+            String assignedCsr = conversationService.createConversation(conversation, message);
+            conversation.setAssignedTo(assignedCsr);
+            ConversationDetail conversationDetail = new ConversationDetail(conversation, null);
             var serverMessage = new WebSocketServerMessage<>(WebSocketEvent.NEW_CONVERSATION, conversationDetail, conversation.getId());
             simpMessagingTemplate.convertAndSend("/topic", serverMessage);
         } catch (Exception e) {

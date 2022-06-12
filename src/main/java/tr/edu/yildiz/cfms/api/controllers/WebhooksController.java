@@ -59,7 +59,7 @@ public class WebhooksController {
 
     @GetMapping("/twitter")
     public Map verifyTwitterWebhook(@RequestParam(name = "crc_token") String crcToken) throws Exception {
-        return verifyTwitterWebhook(crcToken);
+        return webhookService.verifyTwitterWebhook(crcToken);
     }
 
     @PostMapping("/twitter")

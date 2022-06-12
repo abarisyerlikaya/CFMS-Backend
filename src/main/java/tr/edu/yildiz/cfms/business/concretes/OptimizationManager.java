@@ -34,13 +34,20 @@ public class OptimizationManager implements OptimizationService {
     private SessionRegistry sessionRegistry;
 
     @Override
-    public void assignConversation(Conversation conversation) {
+    public String  assignConversation(Conversation conversation) {
         var newTask = conversationToTask(conversation);
         var csrs = getCsrs();
         var problem = new TaskAssignment(newTask, csrs);
         var solution = solve(problem);
         String selectedCsrId = solution.getTask().getCsr().getId();
         updateConversation(conversation.getId(), selectedCsrId);
+
+        var optionalUser = userRepository.findById(selectedCsrId);
+        if (optionalUser.isEmpty()) return null;
+        var user = optionalUser.get();
+        user.setConversationCount(user.getConversationCount() + 1);
+        userRepository.save(user);
+        return selectedCsrId;
     }
 
     private Task conversationToTask(Conversation conversation) {
@@ -53,14 +60,17 @@ public class OptimizationManager implements OptimizationService {
         var onlinePrincipals = sessionRegistry.getAllPrincipals();
 
         for (var principal : onlinePrincipals)
-            if (principal instanceof User && !((User) principal).getUsername().equals("admin"))
-                csrs.add(createCsr((User) principal));
+            if (principal instanceof UserDetails && !((UserDetails) principal).getUsername().equals("admin"))
+                csrs.add(createCsr((UserDetails) principal));
 
         return csrs;
     }
 
-    private Csr createCsr(User user) {
-        String username = user.getUsername();
+    private Csr createCsr(UserDetails userDetails) {
+        String username = userDetails.getUsername();
+        var optionalUser = userRepository.findById(username);
+        if (optionalUser.isEmpty()) return null;
+        var user = optionalUser.get();
         int numberOfConversations = conversationRepository.countByUsername(username);
         int avgConversationLength = (int) ((float) user.getTotalMessageLength() / (float) user.getConversationCount());
         return new Csr(username, numberOfConversations, avgConversationLength);

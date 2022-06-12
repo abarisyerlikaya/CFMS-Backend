@@ -5,5 +5,5 @@ import tr.edu.yildiz.cfms.entities.concretes.hibernate.Conversation;
 
 @Service
 public interface OptimizationService {
-    void assignConversation(Conversation conversation);
+    String  assignConversation(Conversation conversation);
 }

@@ -116,10 +116,16 @@ public class ConversationManager implements ConversationService {
             conversation.setLastMessagePreview(truncate(mongoDbMessagesItem.getText()));
 
             String userId = conversation.getAssignedTo();
+            if (userId == null) userId = "";
             var optionalUser = userRepository.findById(userId);
             if (optionalUser.isEmpty()) throw new Exception("User not found!");
             var user = optionalUser.get();
             user.setTotalMessageLength(user.getTotalMessageLength() + 1);
+
+            if (!conversation.isActive()) {
+                user.setConversationCount(user.getConversationCount() + 1);
+                conversation.setActive(true);
+            }
 
             userRepository.save(user);
             conversationRepository.save(conversation);
@@ -144,6 +150,7 @@ public class ConversationManager implements ConversationService {
             }
             conversation.setLastMessageDate(mongoDbMessagesItems.get(mongoDbMessagesItems.size() - 1).getSentDate());
             conversation.setLastMessagePreview(mongoDbMessagesItems.get(mongoDbMessagesItems.size() - 1).getText());
+            if (!conversation.isActive()) conversation.setActive(true);
 
             String userId = conversation.getAssignedTo();
             var optionalUser = userRepository.findById(userId);
@@ -158,22 +165,15 @@ public class ConversationManager implements ConversationService {
         }
     }
 
-    public void createConversation(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) {
+    public String createConversation(Conversation conversation, MongoDbMessagesItem mongoDbMessagesItem) {
         String id = conversation.getId();
         var messages = new ArrayList<MongoDbMessagesItem>();
         messages.add(mongoDbMessagesItem);
         var mongoDbMessages = new MongoDbMessages(id, messages);
 
-        String userId = conversation.getAssignedTo();
-        var optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) return;
-        var user = optionalUser.get();
-        user.setConversationCount(user.getConversationCount());
-
-        userRepository.save(user);
         conversationRepository.save(conversation);
         messageRepository.save(mongoDbMessages);
-        optimizationService.assignConversation(conversation);
+        return optimizationService.assignConversation(conversation);
     }
 
     @Override
@@ -184,6 +184,23 @@ public class ConversationManager implements ConversationService {
             throw new Exception("Conversation not found!");
 
         var conversation = optional.get();
+        String assignedTo = conversation.getAssignedTo();
+        if (assignedTo == null) assignedTo = "";
+        var optionalUser = userRepository.findById(assignedTo);
+        if (optionalUser.isPresent()) {
+            var user = optionalUser.get();
+            user.setConversationCount(user.getConversationCount() - 1);
+            var optionalMessages = messageRepository.findById(conversation.getId());
+            if (optionalMessages.isPresent()) {
+                var messagesObj = optionalMessages.get();
+                var messagesList = messagesObj.getMessages();
+                if (messagesList != null) {
+                    long messageCount = messagesList.size();
+                    user.setTotalMessageLength(user.getTotalMessageLength() - messageCount);
+                    userRepository.save(user);
+                }
+            }
+        }
 
         conversation.setActive(false);
         conversationRepository.save(conversation);

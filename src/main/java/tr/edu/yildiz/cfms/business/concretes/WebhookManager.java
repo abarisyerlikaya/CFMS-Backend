@@ -310,7 +310,8 @@ public class WebhookManager implements WebhookService {
     private void processTelegramMessage(TelegramWebhookDtoMessage message) {
         var from = message.getFrom();
         String clientName = from.getFirstName() + " " + from.getLastName();
-        LocalDateTime lastMessageDate = LocalDateTime.ofInstant(ofEpochMilli(message.getDate()), getDefault().toZoneId());
+        long timestamp = message.getDate() * 1000;
+        LocalDateTime lastMessageDate = LocalDateTime.ofInstant(ofEpochMilli(timestamp), getDefault().toZoneId());
         String conversationId = Long.toString(message.getChat().getId());
 
         boolean doesExist = conversationRepository.existsById(conversationId);
