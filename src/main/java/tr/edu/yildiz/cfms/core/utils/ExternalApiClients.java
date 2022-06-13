@@ -117,7 +117,7 @@ public class ExternalApiClients {
 
     private static Instagram4j getInstagramClient() throws IOException {
 
-        Instagram4j instagram = Instagram4j.builder().username("bitirmeytu").password("Bitirme123").build();
+        Instagram4j instagram = Instagram4j.builder().username(IG_USERNAME).password(IG_PASSWORD).build();
         instagram.setup();
         instagram.login();
 
