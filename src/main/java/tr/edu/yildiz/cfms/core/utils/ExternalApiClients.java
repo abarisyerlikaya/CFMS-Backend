@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static tr.edu.yildiz.cfms.core.utils.Constants.*;
 import static tr.edu.yildiz.cfms.core.utils.Constants.TELEGRAM_TOKEN;
+import static tr.edu.yildiz.cfms.core.utils.Constants.IG_USERNAME;
+import static tr.edu.yildiz.cfms.core.utils.Constants.IG_PASSWORD;
 
 public class ExternalApiClients {
 
